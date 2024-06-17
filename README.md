@@ -1,17 +1,12 @@
-# Genji
+# Legislatives
 
-A Next.js Web3 app template.
+A list of all candidates for the French legislative election of the 30 June and 7 July 2024.
 
-Features:
+Web app live at [https://legislatives.fun](https://legislatives.fun).
 
-- [Next.js](https://nextjs.org/)
-- [Web3 Modal](https://web3modal.com/)
-- [Ethers.js](https://docs.ethers.org/v6/) (v6)
-- [Chakra UI](https://chakra-ui.com/)
+## Sources
 
-View the [Solidity contract](https://github.com/w3hc/w3hc-hardhat-template/blob/main/contracts/Basic.sol) used in the example.
-
-Web app live at [https://genji-app.netlify.app](https://genji-app.netlify.app).
+- https://doc.parti.re/legislatives/les-candidats-investis.pdf
 
 ## Install
 

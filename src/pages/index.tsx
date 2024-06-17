@@ -9,6 +9,7 @@ import { HeadingComponent } from '../components/layout/HeadingComponent'
 import { ethers } from 'ethers'
 import { Head } from '../components/layout/Head'
 import { SITE_NAME, SITE_DESCRIPTION } from '../utils/config'
+import candidates from '../../candidates.json'
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -19,6 +20,8 @@ export default function Home() {
   const { walletProvider } = useWeb3ModalProvider()
   const provider: Eip1193Provider | undefined = walletProvider
   const toast = useToast()
+
+  console.log('candidates', candidates.length)
 
   const getBal = async () => {
     if (isConnected) {
@@ -116,7 +119,7 @@ export default function Home() {
     <>
       <Head title={SITE_NAME} description={SITE_DESCRIPTION} />
       <main>
-        <Button
+        {/* <Button
           // mt={7}
           colorScheme="blue"
           variant="outline"
@@ -131,7 +134,7 @@ export default function Home() {
           <Text py={4} fontSize="14px" color="#45a2f8">
             <LinkComponent href={txLink ? txLink : ''}>{txHash}</LinkComponent>
           </Text>
-        )}
+        )} */}
       </main>
     </>
   )

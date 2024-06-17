@@ -1,7 +1,7 @@
 import { ThemingProps } from '@chakra-ui/react'
-export const SITE_DESCRIPTION = 'W3HC Next.js app template'
-export const SITE_NAME = 'Genji'
-export const SITE_URL = 'https://genji-app.netlify.app'
+export const SITE_DESCRIPTION = 'Liste complète des candidats aux élections législatives françaises 2024'
+export const SITE_NAME = 'législatives'
+export const SITE_URL = 'https://legislatives.netlify.app'
 
 export const THEME_INITIAL_COLOR = 'system'
 export const THEME_COLOR_SCHEME: ThemingProps['colorScheme'] = 'blue'
@@ -9,8 +9,8 @@ export const THEME_CONFIG = {
   initialColorMode: THEME_INITIAL_COLOR,
 }
 
-export const SOCIAL_TWITTER = 'w3hc8'
-export const SOCIAL_GITHUB = 'w3hc/genji'
+export const SOCIAL_TWITTER = 'julienbrg'
+export const SOCIAL_GITHUB = 'julienbrg/legislatives'
 
 export const SERVER_SESSION_SETTINGS = {
   cookieName: SITE_NAME,
