@@ -25,7 +25,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     const call = async (content: string) => {
       const completion = await openai.chat.completions.create({
         messages: [{ role: 'system', content }],
-        model: 'gpt-4',
+        model: 'gpt-4o',
       })
 
       return completion.choices[0]
