@@ -26,19 +26,24 @@ export default function Home() {
   const toast = useToast()
 
   const call = async () => {
-    setIsLoading(true)
-    const response = await fetch('/api/assistant', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ content: input }),
-    })
-
-    const result = await response.json()
-    console.log('result:', result)
-    setData(result.assistantResponse.message.content)
-    setIsLoading(false)
+    try {
+      setIsLoading(true)
+      const response = await fetch('/api/assistant', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          content: input,
+        }),
+      })
+      const result = await response.json()
+      console.log('result:', result)
+      setData(result.assistantResponse.message.content)
+      setIsLoading(false)
+    } catch (e: any) {
+      console.log('error:', e)
+    }
   }
 
   return (
@@ -46,7 +51,7 @@ export default function Home() {
       <Head title={SITE_NAME} description={SITE_DESCRIPTION} />
       <main>
         <FormControl>
-          <HeadingComponent as={'h1'}>Demandez à Fatou !</HeadingComponent>
+          <HeadingComponent as={'h3'}>Fatou sait tout !</HeadingComponent>
           <br />
           <Textarea value={input} onChange={(e) => setInput(e.target.value)} placeholder="" />
           <FormHelperText>Demander ce que vous voulez à Fatou...</FormHelperText>
@@ -66,7 +71,8 @@ export default function Home() {
         <br />
 
         {data && (
-          <Text py={4} fontSize="14px" color="#45a2f8">
+          // <Text py={4} fontSize="14px" color="#45a2f8">
+          <Text py={4} fontSize="16px">
             <strong>Fatou:</strong> {String(data)}
           </Text>
         )}
