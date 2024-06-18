@@ -6,7 +6,7 @@ Web app live at [https://legislatives.fun](https://legislatives.fun).
 
 ## Sources
 
-- https://doc.parti.re/legislatives/les-candidats-investis.pdf
+All sources (pdf files) are located in the [`sources`](https://github.com/julienbrg/legislatives/tree/main/public) directory.
 
 ## Install
 
