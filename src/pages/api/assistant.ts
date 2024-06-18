@@ -43,8 +43,7 @@ async function fetchAllPDFTexts(): Promise<string[]> {
   const pdfTexts = await Promise.all(
     pdfFiles.map(async (file) => {
       const pdfUrl = `${baseUrl}/sources/${file}`
-      const pdfText = await fetchAndExtractTextFromPDF(pdfUrl)
-      return pdfText
+      return await fetchAndExtractTextFromPDF(pdfUrl)
     })
   )
   return pdfTexts
@@ -53,8 +52,7 @@ async function fetchAllPDFTexts(): Promise<string[]> {
 async function fetchAllHTMLTexts(): Promise<string[]> {
   const htmlTexts = await Promise.all(
     references.map(async (url) => {
-      const htmlText = await fetchAndExtractTextFromHTML(url)
-      return htmlText
+      return await fetchAndExtractTextFromHTML(url)
     })
   )
   return htmlTexts
@@ -74,27 +72,21 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   }
 
   try {
-    const pdfTexts = await fetchAllPDFTexts()
-    const htmlTexts = await fetchAllHTMLTexts()
+    const [pdfTexts, htmlTexts] = await Promise.all([fetchAllPDFTexts(), fetchAllHTMLTexts()])
     const combinedPdfText = pdfTexts.join('\n\n')
     const combinedHtmlText = htmlTexts.join('\n\n')
     const combinedText = `${combinedPdfText}\n\n${combinedHtmlText}`
 
-    const call = async (content: string, additionalContext: string) => {
-      const completion = await openai.chat.completions.create({
-        messages: [
-          { role: 'system', content: 'Réponds-moi toujours en français.' },
-          { role: 'user', content },
-          { role: 'user', content: `Here is some additional context from several documents: ${additionalContext}` },
-        ],
-        model: 'gpt-4o',
-      })
+    const completion = await openai.chat.completions.create({
+      messages: [
+        { role: 'system', content: 'Réponds-moi toujours en français.' },
+        { role: 'user', content },
+        { role: 'user', content: `Here is some additional context from several documents: ${combinedText}` },
+      ],
+      model: 'gpt-4o',
+    })
 
-      return completion.choices[0]
-    }
-
-    const bonus = await call(content, combinedText)
-    res.status(200).json({ assistantResponse: bonus })
+    res.status(200).json({ assistantResponse: completion.choices[0] })
   } catch (error: any) {
     res.status(500).json({ assistantResponse: `Error: ${error.message}` })
   }
