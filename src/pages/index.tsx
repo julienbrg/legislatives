@@ -57,7 +57,7 @@ export default function Home() {
   }
 
   const call = async () => {
-    const response = await fetch('/api/hello')
+    const response = await fetch('/api/assistant')
     const result = await response.json()
     console.log('result:', result)
     setData(result.assistantResponse.message.content)
