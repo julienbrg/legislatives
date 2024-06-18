@@ -1,6 +1,6 @@
 {
-  "name": "genji",
-  "description": "A Next.js Web3 app template",
+  "name": "legislatives",
+  "description": "AI assistant focused on French legislative elections of 30 June and 7 July 2024",
   "version": "0.1.0",
   "scripts": {
     "dev": "next dev",
