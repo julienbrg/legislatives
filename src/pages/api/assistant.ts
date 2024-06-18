@@ -6,7 +6,7 @@ type Data = {
 }
 
 const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
-const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
+const openai = new OpenAI({ apiKey })
 
 async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   if (req.method !== 'POST') {
