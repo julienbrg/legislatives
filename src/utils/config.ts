@@ -1,6 +1,6 @@
 import { ThemingProps } from '@chakra-ui/react'
 export const SITE_DESCRIPTION = 'Liste complète des candidats aux élections législatives françaises 2024'
-export const SITE_NAME = 'législatives'
+export const SITE_NAME = 'Législatives 2024'
 export const SITE_URL = 'https://legislatives.netlify.app'
 
 export const THEME_INITIAL_COLOR = 'system'
