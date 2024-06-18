@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Text, Button, useToast } from '@chakra-ui/react'
+import { Text, Button, useToast, FormControl, FormLabel, Textarea, FormHelperText } from '@chakra-ui/react'
 import { useState } from 'react'
 import { BrowserProvider, Contract, Eip1193Provider, parseEther } from 'ethers'
 import { useWeb3ModalProvider, useWeb3ModalAccount } from '@web3modal/ethers/react'
@@ -9,13 +9,10 @@ import { HeadingComponent } from '../components/layout/HeadingComponent'
 import { ethers } from 'ethers'
 import { Head } from '../components/layout/Head'
 import { SITE_NAME, SITE_DESCRIPTION } from '../utils/config'
-import OpenAI from 'openai'
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [txLink, setTxLink] = useState<string>()
-  const [txHash, setTxHash] = useState<string>()
-
+  const [input, setInput] = useState<string>('Quelle est la date de naissance de Martin Luther King?')
   const [output, setOutput] = useState<string>()
   const [data, setData] = useState<Data | null>(null)
 
@@ -57,10 +54,19 @@ export default function Home() {
   }
 
   const call = async () => {
-    const response = await fetch('/api/assistant')
+    setIsLoading(true)
+    const response = await fetch('/api/assistant', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ content: input }),
+    })
+
     const result = await response.json()
     console.log('result:', result)
     setData(result.assistantResponse.message.content)
+    setIsLoading(false)
   }
 
   const doSomething = async () => {
@@ -131,7 +137,15 @@ export default function Home() {
     <>
       <Head title={SITE_NAME} description={SITE_DESCRIPTION} />
       <main>
-        <HeadingComponent as={'h1'}>OpenAI tests</HeadingComponent>
+        <FormControl>
+          <HeadingComponent as={'h1'}>Aïcha, écoute-moi ! </HeadingComponent>
+          <br />
+
+          {/* <FormLabel>Demander ce que vous voulez à Aïcha...</FormLabel> */}
+          <Textarea value={input} onChange={(e) => setInput(e.target.value)} placeholder="" />
+          <FormHelperText>Demander ce que vous voulez à Aïcha...</FormHelperText>
+        </FormControl>
+
         <br />
         <Button
           // mt={7}
@@ -140,15 +154,15 @@ export default function Home() {
           type="submit"
           onClick={call}
           isLoading={isLoading}
-          loadingText="Asking Jean-Michel..."
+          loadingText="Aïcha réfléchit..."
           spinnerPlacement="end">
-          Ask
+          Demander à Aïcha
         </Button>
         <br />
 
         {data && (
           <Text py={4} fontSize="14px" color="#45a2f8">
-            {String(data)}
+            <strong>Aïcha:</strong> {String(data)}
           </Text>
         )}
       </main>
