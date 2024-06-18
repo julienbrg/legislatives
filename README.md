@@ -1,6 +1,6 @@
 # Legislatives
 
-A list of all candidates for the French legislative election of the 30 June and 7 July 2024.
+Ask anything about the French legislatives elections (30 June and 7 July 2024) to an AI assistant named Fatou.
 
 Web app live at [https://legislatives.fun](https://legislatives.fun).
 

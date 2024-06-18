@@ -46,10 +46,10 @@ export default function Home() {
       <Head title={SITE_NAME} description={SITE_DESCRIPTION} />
       <main>
         <FormControl>
-          <HeadingComponent as={'h1'}>Aïcha, écoute-moi ! </HeadingComponent>
+          <HeadingComponent as={'h1'}>Demandez à Fatou !</HeadingComponent>
           <br />
           <Textarea value={input} onChange={(e) => setInput(e.target.value)} placeholder="" />
-          <FormHelperText>Demander ce que vous voulez à Aïcha...</FormHelperText>
+          <FormHelperText>Demander ce que vous voulez à Fatou...</FormHelperText>
         </FormControl>
 
         <br />
@@ -59,15 +59,15 @@ export default function Home() {
           type="submit"
           onClick={call}
           isLoading={isLoading}
-          loadingText="Aïcha réfléchit..."
+          loadingText="Fatou réfléchit..."
           spinnerPlacement="end">
-          Demander à Aïcha
+          Demander à Fatou
         </Button>
         <br />
 
         {data && (
           <Text py={4} fontSize="14px" color="#45a2f8">
-            <strong>Aïcha:</strong> {String(data)}
+            <strong>Fatou:</strong> {String(data)}
           </Text>
         )}
       </main>
