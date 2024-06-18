@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { Text, Button, useToast, FormControl, FormLabel, Textarea, FormHelperText } from '@chakra-ui/react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { BrowserProvider, Contract, Eip1193Provider, parseEther } from 'ethers'
 import { useWeb3ModalProvider, useWeb3ModalAccount } from '@web3modal/ethers/react'
 import { ERC20_CONTRACT_ADDRESS, ERC20_CONTRACT_ABI } from '../utils/erc20'
@@ -49,6 +49,19 @@ export default function Home() {
     }
   }
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+        call()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [input])
+
   return (
     <>
       <Head title={SITE_NAME} description={SITE_DESCRIPTION} />
@@ -75,7 +88,6 @@ export default function Home() {
 
         {data && (
           <>
-            {/* <Text py={4} fontSize="14px" color="#45a2f8"> */}
             <Text py={4} fontSize="16px">
               <strong>Fatou dit:</strong>
             </Text>

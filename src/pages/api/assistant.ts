@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import OpenAI from 'openai'
 import fetch from 'node-fetch'
 import pdfParse from 'pdf-parse'
+import fs from 'fs'
+import path from 'path'
 
 type Data = {
   assistantResponse: any
@@ -20,6 +22,20 @@ async function fetchAndExtractTextFromPDF(url: string): Promise<string> {
   return data.text
 }
 
+async function fetchAllPDFTexts(): Promise<string[]> {
+  const sourcesDir = path.join(process.cwd(), 'public')
+  const files = fs.readdirSync(sourcesDir)
+  const pdfFiles = files.filter((file) => file.endsWith('.pdf'))
+  const pdfTexts = await Promise.all(
+    pdfFiles.map(async (file) => {
+      const pdfUrl = `http://localhost:3000/${file}`
+      const pdfText = await fetchAndExtractTextFromPDF(pdfUrl)
+      return pdfText
+    })
+  )
+  return pdfTexts
+}
+
 async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   if (req.method !== 'POST') {
     res.status(405).json({ assistantResponse: 'Method not allowed' })
@@ -34,17 +50,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   }
 
   try {
-    const pdfUrl = 'http://localhost:3000/sources/LHumanite-presente-le-programme-du-Nouveau-Front-Populaire.pdf' // Update with your actual file name
-    const pdfText = await fetchAndExtractTextFromPDF(pdfUrl)
+    const pdfTexts = await fetchAllPDFTexts()
+    const combinedPdfText = pdfTexts.join('\n\n')
 
-    console.log('pdfText:', pdfText)
+    console.log('combinedPdfText:', combinedPdfText)
 
     const call = async (content: string, pdfText: string) => {
       const completion = await openai.chat.completions.create({
         messages: [
           { role: 'system', content: 'You are a helpful assistant.' },
           { role: 'user', content },
-          { role: 'user', content: `Here is some additional context from a PDF document: ${pdfText}` },
+          // { role: 'user', content: `Base your response from the documents in the sources folder (let's call these \'Our sources\'): ${combinedPdfText}` },
         ],
         model: 'gpt-4o',
       })
@@ -52,7 +68,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       return completion.choices[0]
     }
 
-    const bonus = await call(content, pdfText)
+    const bonus = await call(content, combinedPdfText)
     res.status(200).json({ assistantResponse: bonus })
   } catch (error: any) {
     res.status(500).json({ assistantResponse: `Error: ${error.message}` })
