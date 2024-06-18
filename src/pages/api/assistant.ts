@@ -4,6 +4,8 @@ import fetch from 'node-fetch'
 import pdfParse from 'pdf-parse'
 import fs from 'fs'
 import path from 'path'
+import cheerio from 'cheerio'
+import references from '../../../public/sources/references.json'
 
 type Data = {
   assistantResponse: any
@@ -11,6 +13,7 @@ type Data = {
 
 const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
 const openai = new OpenAI({ apiKey })
+const baseUrl = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://legislatives.fun'
 
 async function fetchAndExtractTextFromPDF(url: string): Promise<string> {
   const response = await fetch(url)
@@ -22,18 +25,39 @@ async function fetchAndExtractTextFromPDF(url: string): Promise<string> {
   return data.text
 }
 
+async function fetchAndExtractTextFromHTML(url: string): Promise<string> {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error('Failed to fetch HTML page')
+  }
+  const html = await response.text()
+  const $ = cheerio.load(html)
+  const text = $('body').text() // Extract text from the body of the HTML page
+  return text
+}
+
 async function fetchAllPDFTexts(): Promise<string[]> {
-  const sourcesDir = path.join(process.cwd(), 'public')
+  const sourcesDir = path.join(process.cwd(), 'public', 'sources')
   const files = fs.readdirSync(sourcesDir)
   const pdfFiles = files.filter((file) => file.endsWith('.pdf'))
   const pdfTexts = await Promise.all(
     pdfFiles.map(async (file) => {
-      const pdfUrl = `http://localhost:3000/${file}`
+      const pdfUrl = `${baseUrl}/sources/${file}`
       const pdfText = await fetchAndExtractTextFromPDF(pdfUrl)
       return pdfText
     })
   )
   return pdfTexts
+}
+
+async function fetchAllHTMLTexts(): Promise<string[]> {
+  const htmlTexts = await Promise.all(
+    references.map(async (url) => {
+      const htmlText = await fetchAndExtractTextFromHTML(url)
+      return htmlText
+    })
+  )
+  return htmlTexts
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
@@ -51,16 +75,17 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
   try {
     const pdfTexts = await fetchAllPDFTexts()
+    const htmlTexts = await fetchAllHTMLTexts()
     const combinedPdfText = pdfTexts.join('\n\n')
+    const combinedHtmlText = htmlTexts.join('\n\n')
+    const combinedText = `${combinedPdfText}\n\n${combinedHtmlText}`
 
-    console.log('combinedPdfText:', combinedPdfText)
-
-    const call = async (content: string, pdfText: string) => {
+    const call = async (content: string, additionalContext: string) => {
       const completion = await openai.chat.completions.create({
         messages: [
-          { role: 'system', content: 'You are a helpful assistant.' },
+          { role: 'system', content: 'Réponds-moi toujours en français.' },
           { role: 'user', content },
-          // { role: 'user', content: `Base your response from the documents in the sources folder (let's call these \'Our sources\'): ${combinedPdfText}` },
+          { role: 'user', content: `Here is some additional context from several documents: ${additionalContext}` },
         ],
         model: 'gpt-4o',
       })
@@ -68,7 +93,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       return completion.choices[0]
     }
 
-    const bonus = await call(content, combinedPdfText)
+    const bonus = await call(content, combinedText)
     res.status(200).json({ assistantResponse: bonus })
   } catch (error: any) {
     res.status(500).json({ assistantResponse: `Error: ${error.message}` })
