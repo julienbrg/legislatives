@@ -1,13 +1,29 @@
-// Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import type { NextApiRequest, NextApiResponse } from 'next'
+import OpenAI from 'openai'
 
 type Data = {
-  name: string
+  assistantResponse: any
 }
 
-export default function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<Data>
-) {
-  res.status(200).json({ name: 'John Doe' })
+const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
+const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
+
+async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
+  try {
+    const call = async () => {
+      const completion = await openai.chat.completions.create({
+        messages: [{ role: 'system', content: 'You are a helpful assistant.' }],
+        model: 'gpt-4',
+      })
+
+      return completion.choices[0]
+    }
+
+    const bonus = await call()
+    res.status(200).json({ assistantResponse: bonus })
+  } catch (error: any) {
+    res.status(500).json({ assistantResponse: `Error: ${error.message}` })
+  }
 }
+
+export default handler

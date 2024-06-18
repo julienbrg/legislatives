@@ -9,19 +9,24 @@ import { HeadingComponent } from '../components/layout/HeadingComponent'
 import { ethers } from 'ethers'
 import { Head } from '../components/layout/Head'
 import { SITE_NAME, SITE_DESCRIPTION } from '../utils/config'
-import candidates from '../../candidates.json'
+import OpenAI from 'openai'
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [txLink, setTxLink] = useState<string>()
   const [txHash, setTxHash] = useState<string>()
 
+  const [output, setOutput] = useState<string>()
+  const [data, setData] = useState<Data | null>(null)
+
+  type Data = {
+    name: string
+  }
+
   const { address, chainId, isConnected } = useWeb3ModalAccount()
   const { walletProvider } = useWeb3ModalProvider()
   const provider: Eip1193Provider | undefined = walletProvider
   const toast = useToast()
-
-  console.log('candidates', candidates.length)
 
   const getBal = async () => {
     if (isConnected) {
@@ -49,6 +54,13 @@ export default function Home() {
     })
     const receipt = await tx.wait(1)
     return receipt
+  }
+
+  const call = async () => {
+    const response = await fetch('/api/hello')
+    const result = await response.json()
+    console.log('result:', result)
+    setData(result.assistantResponse.message.content)
   }
 
   const doSomething = async () => {
@@ -119,22 +131,26 @@ export default function Home() {
     <>
       <Head title={SITE_NAME} description={SITE_DESCRIPTION} />
       <main>
-        {/* <Button
+        <HeadingComponent as={'h1'}>OpenAI tests</HeadingComponent>
+        <br />
+        <Button
           // mt={7}
           colorScheme="blue"
           variant="outline"
           type="submit"
-          onClick={doSomething}
+          onClick={call}
           isLoading={isLoading}
-          loadingText="Minting..."
+          loadingText="Asking Jean-Michel..."
           spinnerPlacement="end">
-          Mint
+          Ask
         </Button>
-        {txHash && (
+        <br />
+
+        {data && (
           <Text py={4} fontSize="14px" color="#45a2f8">
-            <LinkComponent href={txLink ? txLink : ''}>{txHash}</LinkComponent>
+            {String(data)}
           </Text>
-        )} */}
+        )}
       </main>
     </>
   )
