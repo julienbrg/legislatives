@@ -9,6 +9,8 @@ import { HeadingComponent } from '../components/layout/HeadingComponent'
 import { ethers } from 'ethers'
 import { Head } from '../components/layout/Head'
 import { SITE_NAME, SITE_DESCRIPTION } from '../utils/config'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -43,6 +45,7 @@ export default function Home() {
       setIsLoading(false)
     } catch (e: any) {
       console.log('error:', e)
+      setIsLoading(false)
     }
   }
 
@@ -71,10 +74,20 @@ export default function Home() {
         <br />
 
         {data && (
-          // <Text py={4} fontSize="14px" color="#45a2f8">
-          <Text py={4} fontSize="16px">
-            <strong>Fatou:</strong> {String(data)}
-          </Text>
+          <>
+            {/* <Text py={4} fontSize="14px" color="#45a2f8"> */}
+            <Text py={4} fontSize="16px">
+              <strong>Fatou dit:</strong>
+            </Text>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={{
+                p: ({ node, ...props }) => <p style={{ marginBottom: '16px' }} {...props} />,
+                li: ({ node, ...props }) => <li style={{ marginLeft: '20px', marginBottom: '10px' }} {...props} />,
+              }}>
+              {String(data)}
+            </ReactMarkdown>
+          </>
         )}
       </main>
     </>
