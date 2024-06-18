@@ -19,7 +19,7 @@ export function Head({ title, description }: Props) {
       <meta property="og:url" content={origin} />
       <meta name="twitter:card" content={img} />
       <meta name="twitter:site" content="@julienbrg" />
-      <meta name="twitter:title" content="Législatives 2024: la liste des candidats" />
+      <meta name="twitter:title" content="Législatives 2024: demandez ce que vous voulez à Fatou !" />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={img} />
     </NextHead>
