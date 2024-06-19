@@ -11,6 +11,8 @@ type Data = {
 
 const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
 const openai = new OpenAI({ apiKey })
+const baseUrl = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'http://legislatives.fun'
+console.log('baseUrl:', baseUrl)
 
 async function fetchAndExtractTextFromPDF(url: string): Promise<string> {
   const response = await fetch(url)
@@ -28,7 +30,8 @@ async function fetchAllPDFTexts(): Promise<string[]> {
   const pdfFiles = files.filter((file) => file.endsWith('.pdf'))
   const pdfTexts = await Promise.all(
     pdfFiles.map(async (file) => {
-      const pdfUrl = `http://localhost:3000/sources/${file}`
+      const pdfUrl = `${baseUrl}/sources/${file}`
+      console.log('pdfUrl:', pdfUrl)
       const pdfText = await fetchAndExtractTextFromPDF(pdfUrl)
       return pdfText
     })
