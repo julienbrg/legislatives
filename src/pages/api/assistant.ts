@@ -32,7 +32,7 @@ async function fetchAndExtractTextFromHTML(url: string): Promise<string> {
   }
   const html = await response.text()
   const $ = cheerio.load(html)
-  const text = $('body').text() // Extract text from the body of the HTML page
+  const text = $('body').text()
   return text
 }
 
@@ -43,7 +43,8 @@ async function fetchAllPDFTexts(): Promise<string[]> {
   const pdfTexts = await Promise.all(
     pdfFiles.map(async (file) => {
       const pdfUrl = `${baseUrl}/sources/${file}`
-      return await fetchAndExtractTextFromPDF(pdfUrl)
+      const pdfText = await fetchAndExtractTextFromPDF(pdfUrl)
+      return pdfText
     })
   )
   return pdfTexts
@@ -52,7 +53,8 @@ async function fetchAllPDFTexts(): Promise<string[]> {
 async function fetchAllHTMLTexts(): Promise<string[]> {
   const htmlTexts = await Promise.all(
     references.map(async (url) => {
-      return await fetchAndExtractTextFromHTML(url)
+      const htmlText = await fetchAndExtractTextFromHTML(url)
+      return htmlText
     })
   )
   return htmlTexts
@@ -72,21 +74,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   }
 
   try {
-    const [pdfTexts, htmlTexts] = await Promise.all([fetchAllPDFTexts(), fetchAllHTMLTexts()])
+    const pdfTexts = await fetchAllPDFTexts()
+    const htmlTexts = await fetchAllHTMLTexts()
     const combinedPdfText = pdfTexts.join('\n\n')
     const combinedHtmlText = htmlTexts.join('\n\n')
     const combinedText = `${combinedPdfText}\n\n${combinedHtmlText}`
 
-    const completion = await openai.chat.completions.create({
-      messages: [
-        { role: 'system', content: 'Réponds-moi toujours en français.' },
-        { role: 'user', content },
-        { role: 'user', content: `Here is some additional context from several documents: ${combinedText}` },
-      ],
-      model: 'gpt-4o',
-    })
+    const call = async (content: string, additionalContext: string) => {
+      const completion = await openai.chat.completions.create({
+        messages: [
+          { role: 'system', content: 'Réponds-moi toujours en français.' },
+          { role: 'user', content },
+          { role: 'user', content: `Here is some additional context from several documents: ${additionalContext}` },
+        ],
+        model: 'gpt-4o',
+      })
 
-    res.status(200).json({ assistantResponse: completion.choices[0] })
+      return completion.choices[0]
+    }
+
+    const bonus = await call(content, combinedText)
+    res.status(200).json({ assistantResponse: bonus })
   } catch (error: any) {
     res.status(500).json({ assistantResponse: `Error: ${error.message}` })
   }
