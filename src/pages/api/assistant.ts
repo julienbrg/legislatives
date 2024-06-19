@@ -13,51 +13,71 @@ type Data = {
 
 const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
 const openai = new OpenAI({ apiKey })
-const baseUrl = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://legislatives.fun'
+const baseUrl = 'https://legislatives.fun'
 
 async function fetchAndExtractTextFromPDF(url: string): Promise<string> {
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error('Failed to fetch PDF file')
+  try {
+    console.log(`Fetching PDF: ${url}`)
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error('Failed to fetch PDF file')
+    }
+    const buffer = await response.buffer()
+    const data = await pdfParse(buffer)
+    return data.text
+  } catch (error) {
+    console.error(`Error fetching PDF from ${url}:`, error)
+    throw error
   }
-  const buffer = await response.buffer()
-  const data = await pdfParse(buffer)
-  return data.text
 }
 
 async function fetchAndExtractTextFromHTML(url: string): Promise<string> {
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error('Failed to fetch HTML page')
+  try {
+    console.log(`Fetching HTML: ${url}`)
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error('Failed to fetch HTML page')
+    }
+    const html = await response.text()
+    const $ = cheerio.load(html)
+    const text = $('body').text()
+    return text
+  } catch (error) {
+    console.error(`Error fetching HTML from ${url}:`, error)
+    throw error
   }
-  const html = await response.text()
-  const $ = cheerio.load(html)
-  const text = $('body').text()
-  return text
 }
 
 async function fetchAllPDFTexts(): Promise<string[]> {
-  const sourcesDir = path.join(process.cwd(), 'public', 'sources')
-  const files = fs.readdirSync(sourcesDir)
-  const pdfFiles = files.filter((file) => file.endsWith('.pdf'))
-  const pdfTexts = await Promise.all(
-    pdfFiles.map(async (file) => {
-      const pdfUrl = `${baseUrl}/sources/${file}`
-      const pdfText = await fetchAndExtractTextFromPDF(pdfUrl)
-      return pdfText
-    })
-  )
-  return pdfTexts
+  try {
+    const sourcesDir = path.join(process.cwd(), 'public', 'sources')
+    const files = fs.readdirSync(sourcesDir)
+    const pdfFiles = files.filter((file) => file.endsWith('.pdf'))
+    const pdfTexts = await Promise.all(
+      pdfFiles.map(async (file) => {
+        const pdfUrl = `${baseUrl}/sources/${file}`
+        return await fetchAndExtractTextFromPDF(pdfUrl)
+      })
+    )
+    return pdfTexts
+  } catch (error) {
+    console.error('Error fetching all PDF texts:', error)
+    throw error
+  }
 }
 
 async function fetchAllHTMLTexts(): Promise<string[]> {
-  const htmlTexts = await Promise.all(
-    references.map(async (url) => {
-      const htmlText = await fetchAndExtractTextFromHTML(url)
-      return htmlText
-    })
-  )
-  return htmlTexts
+  try {
+    const htmlTexts = await Promise.all(
+      references.map(async (url) => {
+        return await fetchAndExtractTextFromHTML(url)
+      })
+    )
+    return htmlTexts
+  } catch (error) {
+    console.error('Error fetching all HTML texts:', error)
+    throw error
+  }
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
@@ -74,28 +94,26 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   }
 
   try {
-    const pdfTexts = await fetchAllPDFTexts()
-    const htmlTexts = await fetchAllHTMLTexts()
+    console.log('Starting to fetch PDF and HTML texts')
+    const [pdfTexts, htmlTexts] = await Promise.all([fetchAllPDFTexts(), fetchAllHTMLTexts()])
     const combinedPdfText = pdfTexts.join('\n\n')
     const combinedHtmlText = htmlTexts.join('\n\n')
     const combinedText = `${combinedPdfText}\n\n${combinedHtmlText}`
 
-    const call = async (content: string, additionalContext: string) => {
-      const completion = await openai.chat.completions.create({
-        messages: [
-          { role: 'system', content: 'Réponds-moi toujours en français.' },
-          { role: 'user', content },
-          { role: 'user', content: `Here is some additional context from several documents: ${additionalContext}` },
-        ],
-        model: 'gpt-4o',
-      })
+    console.log('Combined text length:', combinedText.length)
 
-      return completion.choices[0]
-    }
+    const completion = await openai.chat.completions.create({
+      messages: [
+        { role: 'system', content: 'Réponds-moi toujours en français.' },
+        { role: 'user', content },
+        { role: 'user', content: `Here is some additional context from several documents: ${combinedText}` },
+      ],
+      model: 'gpt-4o',
+    })
 
-    const bonus = await call(content, combinedText)
-    res.status(200).json({ assistantResponse: bonus })
+    res.status(200).json({ assistantResponse: completion.choices[0] })
   } catch (error: any) {
+    console.error('Error in handler:', error)
     res.status(500).json({ assistantResponse: `Error: ${error.message}` })
   }
 }
