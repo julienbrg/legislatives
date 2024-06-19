@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Text, Button, useToast, FormControl, FormLabel, Textarea, FormHelperText } from '@chakra-ui/react'
+import { Text, Button, useToast, FormControl, Textarea, FormHelperText } from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
 import { BrowserProvider, Contract, Eip1193Provider, parseEther } from 'ethers'
 import { useWeb3ModalProvider, useWeb3ModalAccount } from '@web3modal/ethers/react'
@@ -46,6 +46,15 @@ export default function Home() {
     } catch (e: any) {
       console.log('error:', e)
       setIsLoading(false)
+      toast({
+        title: 'Woops',
+        description: "Mille excuses, j'ai eu un souci ! Je vous invite à reposer votre question, s'il vous plaît.",
+        status: 'error',
+        position: 'bottom',
+        variant: 'subtle',
+        duration: 9000,
+        isClosable: true,
+      })
     }
   }
 
