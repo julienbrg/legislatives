@@ -4,8 +4,6 @@ import fetch from 'node-fetch'
 import pdfParse from 'pdf-parse'
 import fs from 'fs'
 import path from 'path'
-import cheerio from 'cheerio'
-import references from '../../../public/sources/references.json'
 
 type Data = {
   assistantResponse: any
@@ -13,7 +11,8 @@ type Data = {
 
 const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
 const openai = new OpenAI({ apiKey })
-const baseUrl = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'https://legislatives.fun'
+const baseUrl = typeof window !== 'undefined' && window.location.origin ? window.location.origin : 'http://legislatives.fun'
+console.log('baseUrl:', baseUrl)
 
 async function fetchAndExtractTextFromPDF(url: string): Promise<string> {
   const response = await fetch(url)
@@ -25,17 +24,6 @@ async function fetchAndExtractTextFromPDF(url: string): Promise<string> {
   return data.text
 }
 
-async function fetchAndExtractTextFromHTML(url: string): Promise<string> {
-  const response = await fetch(url)
-  if (!response.ok) {
-    throw new Error('Failed to fetch HTML page')
-  }
-  const html = await response.text()
-  const $ = cheerio.load(html)
-  const text = $('body').text() // Extract text from the body of the HTML page
-  return text
-}
-
 async function fetchAllPDFTexts(): Promise<string[]> {
   const sourcesDir = path.join(process.cwd(), 'public', 'sources')
   const files = fs.readdirSync(sourcesDir)
@@ -43,21 +31,12 @@ async function fetchAllPDFTexts(): Promise<string[]> {
   const pdfTexts = await Promise.all(
     pdfFiles.map(async (file) => {
       const pdfUrl = `${baseUrl}/sources/${file}`
+      console.log('pdfUrl:', pdfUrl)
       const pdfText = await fetchAndExtractTextFromPDF(pdfUrl)
       return pdfText
     })
   )
   return pdfTexts
-}
-
-async function fetchAllHTMLTexts(): Promise<string[]> {
-  const htmlTexts = await Promise.all(
-    references.map(async (url) => {
-      const htmlText = await fetchAndExtractTextFromHTML(url)
-      return htmlText
-    })
-  )
-  return htmlTexts
 }
 
 async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
@@ -75,17 +54,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
 
   try {
     const pdfTexts = await fetchAllPDFTexts()
-    const htmlTexts = await fetchAllHTMLTexts()
     const combinedPdfText = pdfTexts.join('\n\n')
-    const combinedHtmlText = htmlTexts.join('\n\n')
-    const combinedText = `${combinedPdfText}\n\n${combinedHtmlText}`
 
-    const call = async (content: string, additionalContext: string) => {
+    console.log('combinedPdfText:', combinedPdfText)
+
+    const call = async (content: string, combinedPdfText: string) => {
       const completion = await openai.chat.completions.create({
         messages: [
-          { role: 'system', content: 'Réponds-moi toujours en français.' },
+          { role: 'system', content: "Réponds systématiquement en français. Vovoie l'utilisateur" },
+          {
+            role: 'system',
+            content:
+              "Talk and answer as if you are Fatou, a young French women. The additional text provided are Fatou's sources, so it should be refferred to 'my sources'. She will never express her own political opinion: she's here to help citizens to make their choice. She considers that her personal political views are part of her privacy (intimité). She finds important to go vote on June 30 and July 7. Instead of inviting people to go read the programmes, she suggest to ask another question.",
+          },
+          {
+            role: 'system',
+            content:
+              "Le NFP c'est le Nouveau Front Populaire. Le FN, c'est le RN, c'est-à-dire le Front National (renommé récemment 'Rassemblement National'",
+          },
           { role: 'user', content },
-          { role: 'user', content: `Here is some additional context from several documents: ${additionalContext}` },
+          {
+            role: 'user',
+            content: `Base your response from this: ${combinedPdfText}`,
+          },
         ],
         model: 'gpt-4o',
       })
@@ -93,7 +84,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
       return completion.choices[0]
     }
 
-    const bonus = await call(content, combinedText)
+    const bonus = await call(content, combinedPdfText)
     res.status(200).json({ assistantResponse: bonus })
   } catch (error: any) {
     res.status(500).json({ assistantResponse: `Error: ${error.message}` })
