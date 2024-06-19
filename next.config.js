@@ -3,7 +3,6 @@ module.exports = {
   async headers() {
     return [
       {
-        reactStrictMode: true,
         source: '/(.*)',
         headers: [
           {
