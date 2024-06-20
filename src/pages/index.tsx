@@ -28,15 +28,6 @@ export default function Home() {
   const provider: Eip1193Provider | undefined = walletProvider
   const toast = useToast()
 
-  // Compute the corpus from the /sources folder
-  const computeCorpus = async () => {}
-
-  // Compare the sources hashes
-  const compareSourcesHashes = async () => {}
-
-  // Compare the corpus hashes
-  const compareCorpusHashes = async () => {}
-
   const call = async () => {
     try {
       setIsLoading(true)
@@ -51,7 +42,7 @@ export default function Home() {
       })
       const result = await response.json()
       console.log('result:', result)
-      // setData(result.assistantResponse.message.content)
+      setData(result.assistantResponse.message.content)
 
       console.log('result.cid:', result.cid)
       console.log('corpus[0].cid:', corpus[0].cid)
@@ -59,8 +50,6 @@ export default function Home() {
       if (result.cid === corpus[0].cid) {
         setCorpusMatched(true)
       }
-
-      setData(result.combinedPdfText)
       setIsLoading(false)
     } catch (e: any) {
       console.log('error:', e)

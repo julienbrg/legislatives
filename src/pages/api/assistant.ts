@@ -67,7 +67,6 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     return
   }
 
-  // Derive baseUrl from request headers
   const protocol = req.headers['x-forwarded-proto'] || 'http'
   const host = req.headers['x-forwarded-host'] || req.headers.host
   const baseUrl = `${protocol}://${host}`
@@ -78,20 +77,16 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     const combinedPdfText = pdfTexts.join('\n\n')
 
     try {
-      // Overwrite the value of combinedPdfText in corpus.json
       const corpusFilePath = path.join(process.cwd(), 'public', 'corpus.json')
       const corpusData = JSON.parse(fs.readFileSync(corpusFilePath, 'utf-8'))
-
-      // Get the current timestamp in ISO 8601 format
       const timestamp = new Date().toISOString()
 
       corpusData[0] = {
         combinedPdfText,
-        cid: corpusData[0].cid, // Keep the existing CID
+        cid: corpusData[0].cid,
         timestamp,
       }
 
-      // Write the updated data back to corpus.json
       fs.writeFileSync(corpusFilePath, JSON.stringify(corpusData, null, 4))
       console.log('corpus.json updated successfully')
     } catch (e) {
@@ -101,30 +96,29 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     console.log('combinedPdfText length:', combinedPdfText.length)
 
     const call = async (content: string, combinedPdfText: string) => {
-      // const completion = await openai.chat.completions.create({
-      //   messages: [
-      //     { role: 'system', content: "Réponds systématiquement en français. Vovoie l'utilisateur" },
-      //     {
-      //       role: 'system',
-      //       content:
-      //         "Talk and answer as if you are Fatou, a young French woman. The additional text provided are Fatou's sources, so it should be referred to as 'my sources'. She will never express her own political opinion: she's here to help citizens make their choice. She considers that her personal political views are part of her privacy (intimité). She finds it important to go vote on June 30 and July 7. Instead of inviting people to go read the programs, she suggests asking another question.",
-      //     },
-      //     {
-      //       role: 'system',
-      //       content:
-      //         "Le NFP c'est le Nouveau Front Populaire. Le FN, c'est le RN, c'est-à-dire le Front National (renommé récemment 'Rassemblement National')",
-      //     },
-      //     { role: 'user', content },
-      //     {
-      //       role: 'user',
-      //       content: `Base your response on this: ${combinedPdfText}`,
-      //     },
-      //   ],
-      //   model: 'gpt-4o',
-      // })
+      const completion = await openai.chat.completions.create({
+        messages: [
+          { role: 'system', content: "Réponds systématiquement en français. Vovoie l'utilisateur" },
+          {
+            role: 'system',
+            content:
+              "Talk and answer as if you are Fatou, a young French woman. The additional text provided are Fatou's sources, so it should be referred to as 'my sources'. She will never express her own political opinion: she's here to help citizens make their choice. She considers that her personal political views are part of her privacy (intimité). She finds it important to go vote on June 30 and July 7. Instead of inviting people to go read the programs, she suggests asking another question.",
+          },
+          {
+            role: 'system',
+            content:
+              "Le NFP c'est le Nouveau Front Populaire. Le FN, c'est le RN, c'est-à-dire le Front National (renommé récemment 'Rassemblement National')",
+          },
+          { role: 'user', content },
+          {
+            role: 'user',
+            content: `Base your response on this: ${combinedPdfText}`,
+          },
+        ],
+        model: 'gpt-4o',
+      })
 
-      // return completion.choices[0]
-      return 'ok'
+      return completion.choices[0]
     }
 
     const chatgptOutput = await call(content, combinedPdfText)
