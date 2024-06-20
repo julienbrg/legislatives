@@ -50,8 +50,6 @@ export default function Home() {
       if (result.cid === corpus[0].cid) {
         setCorpusMatched(true)
       }
-
-      setData(result.combinedPdfText)
       setIsLoading(false)
     } catch (e: any) {
       console.log('error:', e)
