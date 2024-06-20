@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Text, Button, useToast, FormControl, Textarea, FormHelperText } from '@chakra-ui/react'
+import { Text, Button, useToast, FormControl, Textarea, FormHelperText, Box } from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
 import { BrowserProvider, Contract, Eip1193Provider, parseEther } from 'ethers'
 import { useWeb3ModalProvider, useWeb3ModalAccount } from '@web3modal/ethers/react'
@@ -11,11 +11,12 @@ import { Head } from '../components/layout/Head'
 import { SITE_NAME, SITE_DESCRIPTION } from '../utils/config'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import corpus from '../../public/corpus.json'
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [input, setInput] = useState<string>('Quelle est la date de naissance de Martin Luther King?')
-  const [output, setOutput] = useState<string>()
+  const [corpusMatched, setCorpusMatched] = useState<boolean>(false)
   const [data, setData] = useState<Data | null>(null)
 
   type Data = {
@@ -51,6 +52,14 @@ export default function Home() {
       const result = await response.json()
       console.log('result:', result)
       // setData(result.assistantResponse.message.content)
+
+      console.log('result.cid:', result.cid)
+      console.log('corpus[0].cid:', corpus[0].cid)
+
+      if (result.cid === corpus[0].cid) {
+        setCorpusMatched(true)
+      }
+
       setData(result.combinedPdfText)
       setIsLoading(false)
     } catch (e: any) {
@@ -88,7 +97,7 @@ export default function Home() {
         <FormControl>
           <HeadingComponent as={'h3'}>Fatou sait tout !</HeadingComponent>
           <br />
-          <Textarea value={input} onChange={(e) => setInput(e.target.value)} placeholder="" />
+          <Textarea value={input} onChange={(e: any) => setInput(e.target.value)} placeholder="" />
           <FormHelperText>Demander ce que vous voulez à Fatou...</FormHelperText>
         </FormControl>
 
@@ -103,10 +112,16 @@ export default function Home() {
           spinnerPlacement="end">
           Demander à Fatou
         </Button>
-        <br />
 
         {data && (
           <>
+            {corpusMatched && (
+              <LinkComponent href={'./sources'}>
+                <Text py={4} fontSize="12px">
+                  <strong>Les sources ont été vérifiées. ✅</strong>
+                </Text>
+              </LinkComponent>
+            )}
             <Text py={4} fontSize="16px">
               <strong>Fatou dit:</strong>
             </Text>

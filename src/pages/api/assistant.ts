@@ -4,10 +4,13 @@ import fetch from 'node-fetch'
 import pdfParse from 'pdf-parse'
 import fs from 'fs'
 import path from 'path'
+import { createHelia } from 'helia'
+import { strings } from '@helia/strings'
 
 type Data = {
   assistantResponse: any
   combinedPdfText: string
+  cid?: string
 }
 
 const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
@@ -44,6 +47,13 @@ async function fetchAllPDFTexts(baseUrl: string): Promise<string[]> {
   return pdfTexts
 }
 
+async function computeCid(data: string): Promise<string> {
+  const helia = await createHelia()
+  const s = strings(helia)
+  const myImmutableAddress = await s.add(data)
+  return myImmutableAddress.toString()
+}
+
 async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   if (req.method !== 'POST') {
     res.status(405).json({ assistantResponse: 'Method not allowed', combinedPdfText: '' })
@@ -66,6 +76,27 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   try {
     const pdfTexts = await fetchAllPDFTexts(baseUrl)
     const combinedPdfText = pdfTexts.join('\n\n')
+
+    try {
+      // Overwrite the value of combinedPdfText in corpus.json
+      const corpusFilePath = path.join(process.cwd(), 'public', 'corpus.json')
+      const corpusData = JSON.parse(fs.readFileSync(corpusFilePath, 'utf-8'))
+
+      // Get the current timestamp in ISO 8601 format
+      const timestamp = new Date().toISOString()
+
+      corpusData[0] = {
+        combinedPdfText,
+        cid: corpusData[0].cid, // Keep the existing CID
+        timestamp,
+      }
+
+      // Write the updated data back to corpus.json
+      fs.writeFileSync(corpusFilePath, JSON.stringify(corpusData, null, 4))
+      console.log('corpus.json updated successfully')
+    } catch (e) {
+      console.log("can't write to corpus.json when online ", e)
+    }
 
     console.log('combinedPdfText length:', combinedPdfText.length)
 
@@ -97,7 +128,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     }
 
     const chatgptOutput = await call(content, combinedPdfText)
-    res.status(200).json({ assistantResponse: chatgptOutput, combinedPdfText: combinedPdfText })
+    const cid = await computeCid(combinedPdfText)
+    res.status(200).json({ assistantResponse: chatgptOutput, combinedPdfText: combinedPdfText, cid })
   } catch (error: any) {
     console.error(`Handler error:`, error)
     res.status(500).json({ assistantResponse: `Error: ${error.message}`, combinedPdfText: '' })
