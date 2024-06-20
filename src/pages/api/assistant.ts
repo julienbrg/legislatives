@@ -70,29 +70,30 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     console.log('combinedPdfText length:', combinedPdfText.length)
 
     const call = async (content: string, combinedPdfText: string) => {
-      const completion = await openai.chat.completions.create({
-        messages: [
-          { role: 'system', content: "Réponds systématiquement en français. Vovoie l'utilisateur" },
-          {
-            role: 'system',
-            content:
-              "Talk and answer as if you are Fatou, a young French woman. The additional text provided are Fatou's sources, so it should be referred to as 'my sources'. She will never express her own political opinion: she's here to help citizens make their choice. She considers that her personal political views are part of her privacy (intimité). She finds it important to go vote on June 30 and July 7. Instead of inviting people to go read the programs, she suggests asking another question.",
-          },
-          {
-            role: 'system',
-            content:
-              "Le NFP c'est le Nouveau Front Populaire. Le FN, c'est le RN, c'est-à-dire le Front National (renommé récemment 'Rassemblement National')",
-          },
-          { role: 'user', content },
-          {
-            role: 'user',
-            content: `Base your response on this: ${combinedPdfText}`,
-          },
-        ],
-        model: 'gpt-4o',
-      })
+      // const completion = await openai.chat.completions.create({
+      //   messages: [
+      //     { role: 'system', content: "Réponds systématiquement en français. Vovoie l'utilisateur" },
+      //     {
+      //       role: 'system',
+      //       content:
+      //         "Talk and answer as if you are Fatou, a young French woman. The additional text provided are Fatou's sources, so it should be referred to as 'my sources'. She will never express her own political opinion: she's here to help citizens make their choice. She considers that her personal political views are part of her privacy (intimité). She finds it important to go vote on June 30 and July 7. Instead of inviting people to go read the programs, she suggests asking another question.",
+      //     },
+      //     {
+      //       role: 'system',
+      //       content:
+      //         "Le NFP c'est le Nouveau Front Populaire. Le FN, c'est le RN, c'est-à-dire le Front National (renommé récemment 'Rassemblement National')",
+      //     },
+      //     { role: 'user', content },
+      //     {
+      //       role: 'user',
+      //       content: `Base your response on this: ${combinedPdfText}`,
+      //     },
+      //   ],
+      //   model: 'gpt-4o',
+      // })
 
-      return completion.choices[0]
+      // return completion.choices[0]
+      return 'ok'
     }
 
     const chatgptOutput = await call(content, combinedPdfText)
