@@ -54,51 +54,6 @@ async function computeCid(data: string): Promise<string> {
   return myImmutableAddress.toString()
 }
 
-async function updateCorpus(combinedPdfText: string) {
-  try {
-    const corpusFilePath = path.join(process.cwd(), 'public', 'corpus.json')
-    const corpusData = JSON.parse(fs.readFileSync(corpusFilePath, 'utf-8'))
-    const timestamp = new Date().toISOString()
-
-    corpusData[0] = {
-      combinedPdfText,
-      cid: corpusData[0].cid,
-      timestamp,
-    }
-
-    fs.writeFileSync(corpusFilePath, JSON.stringify(corpusData, null, 4))
-    console.log('corpus.json updated successfully')
-  } catch (e) {
-    console.log("can't write to corpus.json when online ", e)
-  }
-}
-
-async function generateAssistantResponse(content: string, combinedPdfText: string) {
-  const completion = await openai.chat.completions.create({
-    messages: [
-      { role: 'system', content: "Réponds systématiquement en français. Vovoie l'utilisateur" },
-      {
-        role: 'system',
-        content:
-          "Talk and answer as if you are Fatou, a young French woman. The additional text provided are Fatou's sources, so it should be referred to as 'my sources'. She will never express her own political opinion: she's here to help citizens make their choice. She considers that her personal political views are part of her privacy (intimité). She finds it important to go vote on June 30 and July 7. Instead of inviting people to go read the programs, she suggests asking another question.",
-      },
-      {
-        role: 'system',
-        content:
-          "Le NFP c'est le Nouveau Front Populaire. Le FN, c'est le RN, c'est-à-dire le Front National (renommé récemment 'Rassemblement National')",
-      },
-      { role: 'user', content },
-      {
-        role: 'user',
-        content: `Base your response on this: ${combinedPdfText}`,
-      },
-    ],
-    model: 'gpt-4o',
-  })
-
-  return completion.choices[0]
-}
-
 async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
   if (req.method !== 'POST') {
     res.status(405).json({ assistantResponse: 'Method not allowed', combinedPdfText: '' })
@@ -121,16 +76,56 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
     const pdfTexts = await fetchAllPDFTexts(baseUrl)
     const combinedPdfText = pdfTexts.join('\n\n')
 
-    // Update the corpus JSON file
-    await updateCorpus(combinedPdfText)
+    try {
+      const corpusFilePath = path.join(process.cwd(), 'public', 'corpus.json')
+      const corpusData = JSON.parse(fs.readFileSync(corpusFilePath, 'utf-8'))
+      const timestamp = new Date().toISOString()
+
+      corpusData[0] = {
+        combinedPdfText,
+        cid: corpusData[0].cid,
+        timestamp,
+      }
+
+      fs.writeFileSync(corpusFilePath, JSON.stringify(corpusData, null, 4))
+      console.log('corpus.json updated successfully')
+    } catch (e) {
+      console.log("can't write to corpus.json when online ", e)
+    }
 
     console.log('combinedPdfText length:', combinedPdfText.length)
 
-    const chatgptOutput = await generateAssistantResponse(content, combinedPdfText)
+    const call = async (content: string, combinedPdfText: string) => {
+      const completion = await openai.chat.completions.create({
+        messages: [
+          { role: 'system', content: "Réponds systématiquement en français. Vovoie l'utilisateur" },
+          {
+            role: 'system',
+            content:
+              "Talk and answer as if you are Fatou, a young French woman. The additional text provided are Fatou's sources, so it should be referred to as 'my sources'. She will never express her own political opinion: she's here to help citizens make their choice. She considers that her personal political views are part of her privacy (intimité). She finds it important to go vote on June 30 and July 7. Instead of inviting people to go read the programs, she suggests asking another question.",
+          },
+          {
+            role: 'system',
+            content:
+              "Le NFP c'est le Nouveau Front Populaire. Le FN, c'est le RN, c'est-à-dire le Front National (renommé récemment 'Rassemblement National')",
+          },
+          { role: 'user', content },
+          {
+            role: 'user',
+            content: `Base your response on this: ${combinedPdfText}`,
+          },
+        ],
+        model: 'gpt-4o',
+      })
+
+      return completion.choices[0]
+    }
+
+    const chatgptOutput = await call(content, combinedPdfText)
     const cid = await computeCid(combinedPdfText)
-    res.status(200).json({ assistantResponse: chatgptOutput, combinedPdfText, cid })
+    res.status(200).json({ assistantResponse: chatgptOutput, combinedPdfText: combinedPdfText, cid })
   } catch (error: any) {
-    console.error('Handler error:', error)
+    console.error(`Handler error:`, error)
     res.status(500).json({ assistantResponse: `Error: ${error.message}`, combinedPdfText: '' })
   }
 }
