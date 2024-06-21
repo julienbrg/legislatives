@@ -115,7 +115,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
             content: `Base your response on this: ${combinedPdfText}`,
           },
         ],
-        model: 'gpt-4o',
+        model: 'gpt-4-turbo',
       })
 
       return completion.choices[0]
