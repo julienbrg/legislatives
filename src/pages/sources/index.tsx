@@ -47,7 +47,7 @@ export default function Sources() {
             ))}
           </ul>
         ) : (
-          <Text>Aucun fichier PDF trouvé.</Text>
+          <Text>Loading...</Text>
         )}
       </main>
     </>
