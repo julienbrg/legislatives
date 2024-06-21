@@ -19,7 +19,9 @@ import { strings } from '@helia/strings'
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [input, setInput] = useState<string>('Quelle est la date de naissance de Martin Luther King?')
+  const [input, setInput] = useState<string>(
+    "Quelle est la difference entre le programme du NFP et celui de Horizons sur les retraites, s'il te plaît ?"
+  )
   const [corpusMatched, setCorpusMatched] = useState<boolean>(false)
   const [data, setData] = useState<string | null>(null)
 
