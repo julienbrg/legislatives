@@ -31,7 +31,7 @@ export default function Home() {
   const call = async () => {
     try {
       setIsLoading(true)
-      const response = await fetch('/api/assistant.background', {
+      const response = await fetch('/api/assistant', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

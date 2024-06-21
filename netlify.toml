@@ -5,11 +5,6 @@
 [functions]
   directory = "src/pages/api"
 
-[functions."*"]
-  node_bundler = "esbuild"
-  external_node_modules = ["pdf-parse", "helia", "openai", "node-fetch"]
-  region = "eu-central-1"
-
 [[redirects]]
   from = "/*"
   to = "/index.html"
