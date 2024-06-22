@@ -41,7 +41,7 @@ export default function Sources() {
     formData.append('userName', userName)
 
     try {
-      const response = await fetch('/', {
+      const response = await fetch('/sources', {
         method: 'POST',
         body: formData,
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
