@@ -34,17 +34,12 @@ export default function Sources() {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
-    const formData = new FormData()
-    formData.append('form-name', 'pdf-form')
-    formData.append('pdfUrl', pdfUrl)
-    formData.append('userEmail', userEmail)
-    formData.append('userName', userName)
+    const formData = new FormData(event.target as HTMLFormElement)
 
     try {
-      const response = await fetch('/sources', {
+      const response = await fetch('/', {
         method: 'POST',
         body: formData,
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       })
 
       if (!response.ok) {
@@ -108,7 +103,7 @@ export default function Sources() {
               name="pdfUrl"
               value={pdfUrl}
               onChange={(e) => setPdfUrl(e.target.value)}
-              placeholder="https://yvelines.eelv.fr/files/2024/06/240618-PROGRAMME-FRONT-POPULAIRE_V6.pdf"
+              placeholder="https://supersources.fr/Liste-des-candidats-en-Ile-de-France.pdf"
             />
           </FormControl>
           <FormControl mt={4}>
