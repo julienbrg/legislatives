@@ -195,6 +195,10 @@ export default function Home() {
             </ReactMarkdown>
           </>
         )}
+        <br />
+        <br />
+        <br />
+        <br />
       </main>
     </>
   )
