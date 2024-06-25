@@ -14,6 +14,21 @@ export default function Sources() {
 
   const cid = corpus[0].cid
 
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp)
+    return new Intl.DateTimeFormat('fr-FR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+      .format(date)
+      .replace(',', ' à')
+      .replace(':', 'h')
+  }
+
   useEffect(() => {
     const fetchPdfFiles = async () => {
       try {
@@ -23,7 +38,7 @@ export default function Sources() {
         }
         const data = await response.json()
         setPdfFiles(data.pdfFiles)
-        setTimestampFrench('25 juin 2024 à 20h01')
+        setTimestampFrench(formatTimestamp(corpus[0].timestamp))
       } catch (error: any) {
         toast({
           title: 'Error',
@@ -105,7 +120,7 @@ export default function Sources() {
         <br />
         <br />
         <Text>
-          Le hash IPFS (ou CID) est l&apos;empreinte numérique de l&apos;ensemble des textes extraits de chaque document situés dans le dossier
+          Le hash IPFS (ou CID) est l&apos;empreinte numérique de l&apos;ensemble des textes extraits de chaque document situés dans le dossier{' '}
           <Link
             href={`https://github.com/julienbrg/legislatives/blob/1e5ce0c4df93ed33a48fe6086ba96aa443a4aa47/public/corpus.json#L4`}
             target="_blank"
@@ -114,7 +129,7 @@ export default function Sources() {
             _hover={{ color: '#8c1c84' }}>
             &quot;sources&quot;
           </Link>
-          . Ce dossier a été mis à jour le {timestampFrench}
+          . Ce dossier a été mis à jour le {timestampFrench}.
         </Text>
         <br />
         <HeadingComponent as={'h3'}>Ajouter un document</HeadingComponent>
