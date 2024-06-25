@@ -28,12 +28,10 @@ Add your own keys in the `.env` file (you can get it in your [Wallet Connect das
 pnpm dev
 ```
 
-## Add a source
+## Add a document in the sources
 
 - Create a new branch
-- Add a pdf file in the `public/sources` folder
-- Run the app (`pnpm dev`)
-- Ask any question to Fatou
+- Add a pdf file into the `public/sources` folder
 - Run `pnnpm write`
 - Commit, push and merge
 

@@ -1,13 +1,33 @@
 import { useState, useEffect } from 'react'
 import { Text, Button, useToast, Link, FormControl, FormLabel, Input } from '@chakra-ui/react'
 import { HeadingComponent } from '../../components/layout/HeadingComponent'
+import corpus from '../../../public/corpus.json'
 
 export default function Sources() {
   const [pdfFiles, setPdfFiles] = useState<string[]>([])
   const [pdfUrl, setPdfUrl] = useState<string>('')
   const [userEmail, setUserEmail] = useState<string>('')
   const [userName, setUserName] = useState<string>('')
+  const [timestampFrench, setTimestampFrench] = useState<string>('')
+
   const toast = useToast()
+
+  const cid = corpus[0].cid
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp)
+    return new Intl.DateTimeFormat('fr-FR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+      .format(date)
+      .replace(',', ' à')
+      .replace(':', 'h')
+  }
 
   useEffect(() => {
     const fetchPdfFiles = async () => {
@@ -18,6 +38,7 @@ export default function Sources() {
         }
         const data = await response.json()
         setPdfFiles(data.pdfFiles)
+        setTimestampFrench(formatTimestamp(corpus[0].timestamp))
       } catch (error: any) {
         toast({
           title: 'Error',
@@ -87,8 +108,31 @@ export default function Sources() {
           <Text>Loading...</Text>
         )}
         <br />
+        <HeadingComponent as={'h5'}>Hash IPFS</HeadingComponent>
+        <Link
+          href={`https://github.com/julienbrg/legislatives/blob/1e5ce0c4df93ed33a48fe6086ba96aa443a4aa47/public/corpus.json#L4`}
+          target="_blank"
+          rel="noopener noreferrer"
+          color={'#45a2f8'}
+          _hover={{ color: '#8c1c84' }}>
+          <strong>{cid}</strong>
+        </Link>
+        <br />
+        <br />
+        <Text>
+          Le hash IPFS (ou CID) est l&apos;empreinte numérique de l&apos;ensemble des textes extraits de chaque document situés dans le dossier{' '}
+          <Link
+            href={`https://github.com/julienbrg/legislatives/blob/1e5ce0c4df93ed33a48fe6086ba96aa443a4aa47/public/corpus.json#L4`}
+            target="_blank"
+            rel="noopener noreferrer"
+            color={'#45a2f8'}
+            _hover={{ color: '#8c1c84' }}>
+            &quot;sources&quot;
+          </Link>
+          . Ce dossier a été mis à jour le {timestampFrench}.
+        </Text>
+        <br />
         <HeadingComponent as={'h3'}>Ajouter un document</HeadingComponent>
-
         <Text>
           Vous pouvez proposer d&apos;ajouter un document au corpus. Ce document doit être au format PDF et doit être accessible via une URL.
           L&apos;ajout fera l&apos;objet d&apos;un vote.
