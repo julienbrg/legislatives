@@ -1,5 +1,7 @@
 # Legislatives
 
+[![Netlify Status](https://api.netlify.com/api/v1/badges/f0a26e1d-a18a-432d-9d1f-e8552413ef02/deploy-status)](https://app.netlify.com/sites/legislatives/deploys)
+
 Ask anything about the French legislatives elections (30 June and 7 July 2024) to an AI assistant named Fatou.
 
 Web app live at [https://legislatives.fun](https://legislatives.fun).
