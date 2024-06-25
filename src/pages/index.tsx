@@ -118,7 +118,7 @@ export default function Home() {
       // console.log('corpus[0].cid:', corpus[0].cid)
 
       // TODO: get from onchain contract instead
-      if (cid === 'bafkreibkk43dhpyefvsckcwzprmebi3ied7aemic64gzj3dniakpxux7ja') {
+      if (cid === 'bafkreifvf6szeocnoguzzakxe45jecahbgespkmbfw5lakmwleugolfqv4') {
         setCorpusMatched(true)
       }
       setIsLoading(false)

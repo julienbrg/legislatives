@@ -17,7 +17,6 @@
     "@emotion/styled": "^11.11.5",
     "@helia/strings": "^3.0.4",
     "@types/node": "18.16.1",
-    "@types/react": "18.2.0",
     "@types/react-dom": "18.2.1",
     "@web3modal/ethers": "^4.2.3",
     "autoprefixer": "10.4.14",
@@ -30,8 +29,8 @@
     "next-seo": "^6.5.0",
     "node-fetch": "^3.3.2",
     "openai": "^4.51.0",
-    "pdf-lib": "^1.17.1",
     "pdf-parse": "^1.1.1",
+    "pdf-parse-debugging-disabled": "^1.1.1",
     "postcss": "8.4.23",
     "react": "18.2.0",
     "react-dom": "18.2.0",
@@ -40,6 +39,7 @@
     "typescript": "5.0.4"
   },
   "devDependencies": {
-    "@types/pdf-parse": "^1.1.4"
+    "@types/pdf-parse": "^1.1.4",
+    "@types/react": "18.3.3"
   }
 }
