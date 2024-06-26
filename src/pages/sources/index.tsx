@@ -116,6 +116,17 @@ export default function Sources() {
           </Link>
         </Text>
         <br />
+        <Text>Chacun des documents présents dans les sources ont été vérifiés par:</Text>
+        <br />
+        <ul>
+          <li style={{ marginLeft: '20px', marginBottom: '10px' }}>
+            <Link href={`https://julienberanger.com`} target="_blank" rel="noopener noreferrer" color={'#45a2f8'} _hover={{ color: '#8c1c84' }}>
+              Julien Béranger
+            </Link>
+          </li>
+        </ul>
+        <br />
+
         <HeadingComponent as={'h3'}>Ajouter un document</HeadingComponent>
         <Text>
           Vous pouvez proposer d&apos;ajouter un document au corpus. Ce document doit être au format PDF et doit être accessible via une URL.
