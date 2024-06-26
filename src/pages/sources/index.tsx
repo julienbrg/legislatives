@@ -89,8 +89,6 @@ export default function Sources() {
         )}
         <br />
         <HeadingComponent as={'h5'}>Hash IPFS</HeadingComponent>
-
-        <br />
         <Text>
           Le hash IPFS (ou CID) est l&apos;empreinte numérique de l&apos;ensemble des textes extraits de chaque document situés dans le dossier{' '}
           <Link
