@@ -4,7 +4,7 @@ import { HeadingComponent } from '../../components/layout/HeadingComponent'
 import corpus from '../../../public/corpus.json'
 
 export default function Sources() {
-  const [pdfFiles, setPdfFiles] = useState<string[]>([])
+  const [pdfFiles, setPdfFiles] = useState<string[]>(corpus[0].files)
   const [pdfUrl, setPdfUrl] = useState<string>('')
   const [userEmail, setUserEmail] = useState<string>('')
   const [userName, setUserName] = useState<string>('')
@@ -30,28 +30,8 @@ export default function Sources() {
   }
 
   useEffect(() => {
-    const fetchPdfFiles = async () => {
-      try {
-        const response = await fetch('/api/list-pdfs')
-        if (!response.ok) {
-          throw new Error('Failed to fetch PDF files')
-        }
-        const data = await response.json()
-        setPdfFiles(data.pdfFiles)
-        setTimestampFrench(formatTimestamp(corpus[0].timestamp))
-      } catch (error: any) {
-        toast({
-          title: 'Error',
-          description: error.message,
-          status: 'error',
-          duration: 9000,
-          isClosable: true,
-        })
-      }
-    }
-
-    fetchPdfFiles()
-  }, [toast])
+    setTimestampFrench(formatTimestamp(corpus[0].timestamp))
+  }, [])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -109,16 +89,6 @@ export default function Sources() {
         )}
         <br />
         <HeadingComponent as={'h5'}>Hash IPFS</HeadingComponent>
-        <Link
-          href={`https://github.com/julienbrg/legislatives/blob/1e5ce0c4df93ed33a48fe6086ba96aa443a4aa47/public/corpus.json#L4`}
-          target="_blank"
-          rel="noopener noreferrer"
-          color={'#45a2f8'}
-          _hover={{ color: '#8c1c84' }}>
-          <strong>{cid}</strong>
-        </Link>
-        <br />
-        <br />
         <Text>
           Le hash IPFS (ou CID) est l&apos;empreinte numérique de l&apos;ensemble des textes extraits de chaque document situés dans le dossier{' '}
           <Link
@@ -129,9 +99,32 @@ export default function Sources() {
             _hover={{ color: '#8c1c84' }}>
             &quot;sources&quot;
           </Link>
-          . Ce dossier a été mis à jour le {timestampFrench}.
+          . Ce dossier a été mis à jour <strong>le {timestampFrench}</strong>.
         </Text>
         <br />
+        <Text>
+          CID actuel:{' '}
+          <Link
+            href={`https://github.com/julienbrg/legislatives/blob/1e5ce0c4df93ed33a48fe6086ba96aa443a4aa47/public/corpus.json#L4`}
+            target="_blank"
+            rel="noopener noreferrer"
+            color={'#45a2f8'}
+            _hover={{ color: '#8c1c84' }}>
+            <strong>{cid}</strong>
+          </Link>
+        </Text>
+        <br />
+        <Text>Chacun des documents présents dans les sources ont été vérifiés par:</Text>
+        <br />
+        <ul>
+          <li style={{ marginLeft: '20px', marginBottom: '10px' }}>
+            <Link href={`https://julienberanger.com`} target="_blank" rel="noopener noreferrer" color={'#45a2f8'} _hover={{ color: '#8c1c84' }}>
+              Julien Béranger
+            </Link>
+          </li>
+        </ul>
+        <br />
+
         <HeadingComponent as={'h3'}>Ajouter un document</HeadingComponent>
         <Text>
           Vous pouvez proposer d&apos;ajouter un document au corpus. Ce document doit être au format PDF et doit être accessible via une URL.

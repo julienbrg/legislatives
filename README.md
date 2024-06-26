@@ -37,6 +37,12 @@ pnpm dev
 - Run `pnnpm write`
 - Commit, push and merge
 
+## Roadmap
+
+- **Governance**: we plan to integrate with [Gov](https://github.com/w3hc/gov) (a on-chain voting system) to allow a pool of journalists and academics to validate any adding in the `/sources` directory. We will use [Tally](https://www.tally.xyz/) as a voting interface. The members of the DAO will vote on a given CID (IPFS hash) so that everyone can verify that ChatGPT bases its answers on the right corpus of documents.
+
+- **Paywall**: Stripe will be integrated so that users can pay as they use the app: they would login with their email, then pay in fiat, then a Solidity contract (deployed to Optimism) will be credidted, then debited at each question asked. The users will also be able to withdraw from the contract the unspent funds.
+
 ## Versions
 
 - pnpm v8.7.5
