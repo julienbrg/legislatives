@@ -8,7 +8,7 @@ import { SITE_NAME } from '../../utils/config'
 import { GiReceiveMoney } from 'react-icons/gi'
 import { IoExitOutline, IoEnterOutline } from 'react-icons/io5'
 import { GrValidate } from 'react-icons/gr'
-import { LuUserPlus } from 'react-icons/lu'
+import { LuBookOpenCheck } from 'react-icons/lu'
 
 interface Props {
   className?: string
@@ -36,8 +36,8 @@ export function Header(props: Props) {
               </MenuItem>
             </LinkComponent>
             <LinkComponent href="/sources">
-              <MenuItem fontSize="xl" icon={<InfoIcon />}>
-                Info
+              <MenuItem fontSize="xl" icon={<LuBookOpenCheck />}>
+                Sources
               </MenuItem>
             </LinkComponent>
           </MenuList>
