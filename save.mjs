@@ -25,7 +25,7 @@ async function combinePdfTexts(sourceDir) {
     combinedText.push(text)
   }
 
-  return combinedText.join('\n')
+  return { combinedText: combinedText.join('\n'), files }
 }
 
 async function computeCid(data) {
@@ -43,11 +43,11 @@ async function updateCorpus() {
   const corpusFilePath = path.join(process.cwd(), 'public', 'corpus.json')
   const sourceDir = path.join(process.cwd(), 'public', 'sources')
 
-  const combinedPdfText = await combinePdfTexts(sourceDir)
-  const cid = await computeCid(combinedPdfText)
+  const { combinedText, files } = await combinePdfTexts(sourceDir)
+  const cid = await computeCid(combinedText)
   const timestamp = new Date().toISOString()
 
-  const corpusData = [{ combinedPdfText, cid, timestamp }]
+  const corpusData = [{ combinedPdfText: combinedText, cid, timestamp, files }]
 
   fs.writeFileSync(corpusFilePath, JSON.stringify(corpusData, null, 4))
   console.log('corpus.json updated successfully')
