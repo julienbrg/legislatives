@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Text, Button, useToast, FormControl, Textarea, FormHelperText, Box } from '@chakra-ui/react'
+import { Text, Button, useToast, FormControl, Textarea, FormHelperText } from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
 import { useWeb3ModalProvider, useWeb3ModalAccount } from '@web3modal/ethers/react'
 import { LinkComponent } from '../components/layout/LinkComponent'
@@ -9,7 +9,6 @@ import { SITE_NAME, SITE_DESCRIPTION } from '../utils/config'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import corpus from '../../public/corpus.json'
-import OpenAI from 'openai'
 import { createHelia } from 'helia'
 import { strings } from '@helia/strings'
 
@@ -25,9 +24,6 @@ export default function Home() {
   const { walletProvider } = useWeb3ModalProvider()
   const toast = useToast()
 
-  const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
-  const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
-
   async function computeCid(data: string): Promise<string> {
     const helia = await createHelia()
     const s = strings(helia)
@@ -35,83 +31,35 @@ export default function Home() {
     return myImmutableAddress.toString()
   }
 
-  // async function fetchAndExtractTextFromPDF(url: string): Promise<string> {
-  //   const response = await fetch(url)
-  //   if (!response.ok) {
-  //     throw new Error(`Failed to fetch PDF file from ${url}`)
-  //   }
-  //   const arrayBuffer = await response.arrayBuffer()
-  //   const buffer = Buffer.from(arrayBuffer)
-  //   const data = await pdfParse(buffer)
-  //   return data.text
-  // }
-
-  // async function fetchAllPDFTexts(baseUrl: string): Promise<string[]> {
-  //   const sourcesDir = path.join(process.cwd(), 'public', 'sources')
-  //   const files = fs.readdirSync(sourcesDir)
-  //   const pdfFiles = files.filter((file) => file.endsWith('.pdf'))
-  //   const pdfTexts: string[] = []
-
-  //   for (const file of pdfFiles) {
-  //     try {
-  //       const pdfUrl = `${baseUrl}/sources/${file}`
-  //       console.log('Fetching PDF from:', pdfUrl)
-  //       const pdfText = await fetchAndExtractTextFromPDF(pdfUrl)
-  //       pdfTexts.push(pdfText)
-  //     } catch (error) {
-  //       console.error(`Error processing file ${file}:`, error)
-  //     }
-  //   }
-
-  //   return pdfTexts
-  // }
-
-  async function callOpenAI(content: string) {
-    const completion = await openai.chat.completions.create({
-      messages: [
-        { role: 'system', content: "Réponds systématiquement en français. Vovoie l'utilisateur" },
-        {
-          role: 'system',
-          content:
-            "Talk and answer as if you are Fatou, a young French woman. The additional text provided are Fatou's sources, so it should be referred to as 'my sources'. She will never express her own political opinion: she's here to help citizens make their choice. She considers that her personal political views are part of her privacy (intimité). She finds it important to go vote on June 30 and July 7. Instead of inviting people to go read the programs, she suggests asking another question.",
-        },
-        {
-          role: 'system',
-          content:
-            "Le NFP c'est le Nouveau Front Populaire. Le FN, c'est le RN, c'est-à-dire le Front National (renommé récemment 'Rassemblement National'). Renaissance = Horizons = Ensemble pour la République = Ensemble = Macron = Attal = majorité présidentielle",
-        },
-        { role: 'user', content },
-        {
-          role: 'user',
-          content: `Base your response on this: ${corpus[0].combinedPdfText}`,
-        },
-      ],
-      model: 'gpt-4-turbo',
+  async function callAssistantAPI(input: string) {
+    const response = await fetch('/.netlify/functions/assistant', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ input }),
     })
 
-    return completion.choices[0]
+    if (!response.ok) {
+      throw new Error('Failed to fetch response from assistant API')
+    }
+
+    const data = await response.json()
+    return data.message
   }
 
   const call = async () => {
     try {
       setIsLoading(true)
 
-      // Get the base URL dynamically
-      const protocol = window.location.protocol
-      const host = window.location.host
-      const baseUrl = `${protocol}//${host}`
-
-      // const pdfTexts = await fetchAllPDFTexts(baseUrl)
-      // const combinedPdfText = pdfTexts.join('\n\n')
-
-      const result = await callOpenAI(input)
+      const result = await callAssistantAPI(input)
       console.log('result:', result)
-      setData(result.message.content)
+      setData(result)
 
       // Check if CID matches
       const cid = await computeCid(corpus[0].combinedPdfText)
       console.log('result.cid:', cid)
-      // console.log('corpus[0].cid:', corpus[0].cid)
+      // console.log('corpus[0].cid:', corpus[0].cid);
 
       // TODO: get from onchain contract instead
       if (cid === 'bafkreigeqjzxysmhc6tue7vaj27r7lqmkhhpcysowf4an46tlp6pouu6ia') {
