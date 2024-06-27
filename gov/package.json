@@ -1,0 +1,53 @@
+{
+    "name": "gov",
+    "version": "0.10.0",
+    "description": "A DAO framework built with Open Zeppelin's Governor in combination with NFTs",
+    "main": "index.js",
+    "scripts": {
+        "test": "hardhat test",
+        "compile": "hardhat compile",
+        "deploy:arthera": "hardhat deploy --network arthera --reset",
+        "deploy:sepolia": "hardhat deploy --network sepolia --reset",
+        "deploy:arthera-testnet": "hardhat deploy --network arthera-testnet && hardhat sourcify --network arthera-testnet --reset",
+        "deploy:op-sepolia": "hardhat deploy --network op-sepolia --reset",
+        "sourcify:arthera": "hardhat sourcify --network arthera",
+        "sourcify:arthera-testnet": "hardhat sourcify --network arthera-testnet",
+        "bal": "npx hardhat run scripts/check-my-balance.ts --network",
+        "prettier": "prettier --write \"**/*.ts\"",
+        "prettier-check": "prettier --check \"**/*.ts\"",
+        "propose": "hardhat run scripts/propose.ts --network sepolia"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "devDependencies": {
+        "@nomicfoundation/hardhat-chai-matchers": "^2.0.3",
+        "@nomicfoundation/hardhat-ethers": "^3.0.5",
+        "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
+        "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+        "@nomicfoundation/hardhat-verify": "^1.1.1",
+        "@typechain/ethers-v6": "^0.4.3",
+        "@typechain/hardhat": "^8.0.3",
+        "@types/chai": "^4.3.11",
+        "@types/cli-color": "^2.0.6",
+        "@types/mocha": "^10.0.6",
+        "chai": "^4.4.1",
+        "hardhat": "^2.19.4",
+        "hardhat-gas-reporter": "^1.0.9",
+        "prettier": "^2.8.8",
+        "prettier-plugin-solidity": "^1.3.1",
+        "solidity-coverage": "^0.8.6",
+        "ts-node": "^10.9.2",
+        "typechain": "^8.3.2",
+        "typescript": "^5.3.3"
+    },
+    "dependencies": {
+        "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers@^0.4.1",
+        "@openzeppelin/contracts": "^5.0.2",
+        "@types/node": "^20.11.10",
+        "cli-color": "^2.0.3",
+        "dotenv": "^16.4.1",
+        "ethers": "^6.10.0",
+        "hardhat-deploy": "^0.11.45"
+    }
+}
