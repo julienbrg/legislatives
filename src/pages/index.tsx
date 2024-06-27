@@ -10,17 +10,13 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import corpus from '../../public/corpus.json'
 import OpenAI from 'openai'
-// import fetch from 'node-fetch'
-// import pdfParse from 'pdf-parse'
-// import fs from 'fs'
-// import path from 'path'
 import { createHelia } from 'helia'
 import { strings } from '@helia/strings'
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [input, setInput] = useState<string>(
-    "Quelle est la difference entre le programme du NFP et celui de Horizons sur les retraites, s'il te plaît ?"
+    "Quelle sont les differences au sujet de l'éducation entre le programme du NFP, celui de Ensemble, et celui du FN, s'il te plaît ?"
   )
   const [corpusMatched, setCorpusMatched] = useState<boolean>(false)
   const [data, setData] = useState<string | null>(null)
@@ -82,7 +78,7 @@ export default function Home() {
         {
           role: 'system',
           content:
-            "Le NFP c'est le Nouveau Front Populaire. Le FN, c'est le RN, c'est-à-dire le Front National (renommé récemment 'Rassemblement National')",
+            "Le NFP c'est le Nouveau Front Populaire. Le FN, c'est le RN, c'est-à-dire le Front National (renommé récemment 'Rassemblement National'). Renaissance = Horizons = Ensemble pour la République = Ensemble = Macron = Attal = majorité présidentielle",
         },
         { role: 'user', content },
         {
@@ -118,7 +114,7 @@ export default function Home() {
       // console.log('corpus[0].cid:', corpus[0].cid)
 
       // TODO: get from onchain contract instead
-      if (cid === 'bafkreiawk7amwe4cycyprha4t4krkswvnto6ma3jkq7tftltvb6g7hfbxe') {
+      if (cid === 'bafkreigeqjzxysmhc6tue7vaj27r7lqmkhhpcysowf4an46tlp6pouu6ia') {
         setCorpusMatched(true)
       }
       setIsLoading(false)
