@@ -6,6 +6,13 @@ Ask anything about the French legislatives elections (30 June and 7 July 2024) t
 
 Web app live at [https://legislatives.fun](https://legislatives.fun).
 
+### Note on Governance
+
+We integrated with [Gov](https://github.com/w3hc/gov) (a on-chain voting system) to allow a pool of journalists and academics to validate any adding in the `/sources` directory. We use [Tally](https://www.tally.xyz/gov/verifiers-dao) as a voting interface. The members of the DAO will vote on a given CID (IPFS hash) so that everyone can verify that ChatGPT bases its answers on the right corpus of documents.
+
+- Voting page: https://www.tally.xyz/gov/verifiers-dao
+- DAO contract address: [0xE3a0661903a2bf1b87DDc3DA98a24D4275D5B703](https://sepolia.etherscan.io/address/0xE3a0661903a2bf1b87DDc3DA98a24D4275D5B703#code)
+
 ## Sources
 
 All sources (pdf files) are located in the [`sources`](https://github.com/julienbrg/legislatives/tree/main/public) directory.
@@ -38,8 +45,6 @@ pnpm dev
 - Commit, push and merge
 
 ## Roadmap
-
-- **Governance**: we plan to integrate with [Gov](https://github.com/w3hc/gov) (a on-chain voting system) to allow a pool of journalists and academics to validate any adding in the `/sources` directory. We will use [Tally](https://www.tally.xyz/) as a voting interface. The members of the DAO will vote on a given CID (IPFS hash) so that everyone can verify that ChatGPT bases its answers on the right corpus of documents.
 
 - **Paywall**: Stripe will be integrated so that users can pay as they use the app: they would login with their email, then pay in fiat, then a Solidity contract (deployed to Optimism) will be credidted, then debited at each question asked. The users will also be able to withdraw from the contract the unspent funds.
 

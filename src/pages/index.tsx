@@ -12,6 +12,10 @@ import corpus from '../../public/corpus.json'
 import OpenAI from 'openai'
 import { createHelia } from 'helia'
 import { strings } from '@helia/strings'
+import { ethers } from 'ethers'
+import govContract from '../utils/Gov.json'
+
+const customProvider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_ENDPOINT_URL)
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
@@ -113,8 +117,11 @@ export default function Home() {
       console.log('result.cid:', cid)
       // console.log('corpus[0].cid:', corpus[0].cid)
 
-      // TODO: get from onchain contract instead
-      if (cid === 'bafkreigeqjzxysmhc6tue7vaj27r7lqmkhhpcysowf4an46tlp6pouu6ia') {
+      const gov = new ethers.Contract(govContract.address, govContract.abi, customProvider)
+      const corpusFromContract = await gov.corpus()
+      console.log('corpusFromContract:', corpusFromContract)
+
+      if (cid === corpusFromContract) {
         setCorpusMatched(true)
       }
       setIsLoading(false)

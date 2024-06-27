@@ -124,6 +124,12 @@ export default function Sources() {
             </Link>
           </li>
         </ul>
+        <Link href={'https://www.tally.xyz/gov/verifiers-dao'} target="_blank" rel="noopener noreferrer" _hover={{ textDecoration: 'none' }}>
+          <Button mt={4} colorScheme="green" variant="outline" rightIcon={<ArrowForwardIcon />}>
+            Voir la page de vote
+          </Button>
+        </Link>
+        <br />
         <br />
         <Text>Vous pouvez demander à faire partie des personnes qui vérifient les sources:</Text>
         <Link
