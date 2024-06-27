@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Text, Button, useToast, Link, FormControl, FormLabel, Input } from '@chakra-ui/react'
 import { HeadingComponent } from '../../components/layout/HeadingComponent'
 import corpus from '../../../public/corpus.json'
+import { ArrowForwardIcon } from '@chakra-ui/icons'
 
 export default function Sources() {
   const [pdfFiles, setPdfFiles] = useState<string[]>(corpus[0].files)
@@ -124,14 +125,26 @@ export default function Sources() {
           </li>
         </ul>
         <br />
-
+        <Text>Vous pouvez demander à faire partie des personnes qui vérifient les sources:</Text>
+        <Link
+          href={
+            'mailto:julien@strat.cc?subject=Nouveau%20contributeur&body=Bonjour%20Julien,%0A%0AJe%20souhaiterais%20faire%20partie%20des%20personnes%20qui%20vérifient%20les%20sources%20de%20cette%20appli.%0A%0AMerci%20et%20bonne%20journée%20!%0A'
+          }
+          target="_blank"
+          rel="noopener noreferrer"
+          _hover={{ textDecoration: 'none' }}>
+          <Button mt={4} colorScheme="green" variant="outline" rightIcon={<ArrowForwardIcon />}>
+            Contribuer
+          </Button>
+        </Link>
+        <br />
+        <br />
         <HeadingComponent as={'h3'}>Ajouter un document</HeadingComponent>
         <Text>
           Vous pouvez proposer d&apos;ajouter un document au corpus. Ce document doit être au format PDF et doit être accessible via une URL.
           L&apos;ajout fera l&apos;objet d&apos;un vote.
         </Text>
-
-        <form name="pdf-form" method="POST" data-netlify="true" onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
+        {/* <form name="pdf-form" method="POST" data-netlify="true" onSubmit={handleSubmit} style={{ marginTop: '20px' }}>
           <input type="hidden" name="form-name" value="pdf-form" />
           <FormControl>
             <FormLabel htmlFor="pdfUrl">Lien vers le PDF</FormLabel>
@@ -162,9 +175,19 @@ export default function Sources() {
           <Button mt={4} colorScheme="blue" type="submit">
             Submit
           </Button>
-        </form>
+        </form> */}
+        <Link
+          href={'https://docs.google.com/forms/d/e/1FAIpQLScf70DubUsFC2f20F_SMA80sNjhIZN00teAOtuuSpQvZyQQUA/viewform'}
+          target="_blank"
+          rel="noopener noreferrer"
+          _hover={{ textDecoration: 'none' }}>
+          <Button mt={4} colorScheme="green" variant="outline" rightIcon={<ArrowForwardIcon />}>
+            Ajout d&apos;un document
+          </Button>
+        </Link>
         <br />
         <br />
+        <br /> <br />
         <br />
         <br />
       </main>
