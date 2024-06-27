@@ -1,5 +1,0 @@
-[functions]
-  node_bundler = "esbuild"
-
-[functions."assistant"]
-  timeout = 40
