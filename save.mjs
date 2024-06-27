@@ -34,7 +34,7 @@ async function computeCid(data) {
   const myImmutableAddress = await s.add(data)
   const cid = myImmutableAddress.toString()
 
-  console.log('CID is valid:', cid)
+  console.log('Corpus CID:', cid)
 
   return cid
 }
@@ -43,11 +43,22 @@ async function updateCorpus() {
   const corpusFilePath = path.join(process.cwd(), 'public', 'corpus.json')
   const sourceDir = path.join(process.cwd(), 'public', 'sources')
 
-  const { combinedText, files } = await combinePdfTexts(sourceDir)
-  const cid = await computeCid(combinedText)
-  const timestamp = new Date().toISOString()
+  let existingCorpus = []
+  if (fs.existsSync(corpusFilePath)) {
+    existingCorpus = JSON.parse(fs.readFileSync(corpusFilePath, 'utf-8'))
+  }
 
-  const corpusData = [{ combinedPdfText: combinedText, cid, timestamp, files }]
+  const { combinedText, files } = await combinePdfTexts(sourceDir)
+  const newCid = await computeCid(combinedText)
+
+  const existingCid = existingCorpus.length > 0 ? existingCorpus[0].cid : null
+  if (newCid === existingCid) {
+    console.log('Same CID: no timestamp update.')
+    process.exit(0)
+  }
+
+  const timestamp = new Date().toISOString()
+  const corpusData = [{ combinedPdfText: combinedText, cid: newCid, timestamp, files }]
 
   fs.writeFileSync(corpusFilePath, JSON.stringify(corpusData, null, 4))
   console.log('corpus.json updated successfully')
