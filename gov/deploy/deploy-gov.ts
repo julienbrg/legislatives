@@ -9,6 +9,7 @@ import {
     name,
     symbol,
     manifesto,
+    corpus,
     daoName,
     votingDelay,
     votingPeriod,
@@ -39,6 +40,7 @@ export default async ({ getNamedAccounts, deployments }: any) => {
         args: [
             nft.address,
             manifesto,
+            corpus,
             daoName,
             votingDelay,
             votingPeriod,
@@ -204,6 +206,7 @@ export default async ({ getNamedAccounts, deployments }: any) => {
                     constructorArguments: [
                         nft.address,
                         manifesto,
+                        corpus,
                         daoName,
                         votingDelay,
                         votingPeriod,

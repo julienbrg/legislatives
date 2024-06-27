@@ -14,7 +14,9 @@ export const symbol = "MEMBER"
 
 export const manifesto =
     "https://bafkreifnnreoxxgkhty7v2w3qwiie6cfxpv3vcco2xldekfvbiem3nm6dm.ipfs.w3s.link/"
-export const daoName = "Test DAO"
+export const corpus =
+    "bafkreigeqjzxysmhc6tue7vaj27r7lqmkhhpcysowf4an46tlp6pouu6ia"
+export const daoName = "Verifiers DAO"
 export const votingDelay = 1
 export const votingPeriod = 300
 export const votingThreshold = 1

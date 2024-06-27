@@ -15,12 +15,15 @@ contract Gov is
     GovernorVotesQuorumFraction
 {
     string public manifesto;
+    string public corpus;
 
     event ManifestoUpdated(string cid);
+    event CorpusUpdated(string cid);
 
     constructor(
         IVotes _token,
         string memory _manifesto,
+        string memory _corpus,
         string memory _name,
         uint48 _votingDelay,
         uint32 _votingPeriod,
@@ -33,6 +36,7 @@ contract Gov is
         GovernorVotesQuorumFraction(_quorum)
     {
         manifesto = _manifesto;
+        corpus = _corpus;
     }
 
     function votingDelay() public view override(Governor, GovernorSettings) returns (uint256) {
@@ -64,5 +68,13 @@ contract Gov is
     function setManifesto(string memory cid) public onlyGovernance {
         manifesto = cid;
         emit ManifestoUpdated(cid);
+    }
+
+    /// @notice Replaces the CID of the corpus
+    /// @dev Sets the CID of a string extracted from a selection of pdfs 
+    /// @param cid The CID of the new corpus
+    function setCorpusCID(string memory cid) public onlyGovernance {
+        corpus = cid;
+        emit CorpusUpdated(cid);
     }
 }

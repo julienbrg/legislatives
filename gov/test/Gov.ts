@@ -39,6 +39,8 @@ describe("Gov", function () {
 
         const manifesto =
             "bafybeihprzyvilohv6zwyqiel7wt3dncpjqdsc6q7xfj3iuraoc7n552ya"
+        const corpus =
+            "bafkreigeqjzxysmhc6tue7vaj27r7lqmkhhpcysowf4an46tlp6pouu6ia"
         const name = "Gov"
         const votingDelay = 1 // 1 second
         const votingPeriod = 60 * 60 * 24 * 15 // 15 days
@@ -48,6 +50,7 @@ describe("Gov", function () {
         const gov = await Gov.deploy(
             await nft.getAddress(),
             manifesto,
+            corpus,
             name,
             votingDelay,
             votingPeriod,
@@ -146,6 +149,13 @@ describe("Gov", function () {
             const { gov } = await loadFixture(deployContracts)
             expect(await gov.manifesto()).to.equal(
                 "bafybeihprzyvilohv6zwyqiel7wt3dncpjqdsc6q7xfj3iuraoc7n552ya"
+            )
+        })
+
+        it("Should set the right corpus cid", async function () {
+            const { gov } = await loadFixture(deployContracts)
+            expect(await gov.corpus()).to.equal(
+                "bafkreigeqjzxysmhc6tue7vaj27r7lqmkhhpcysowf4an46tlp6pouu6ia"
             )
         })
 
