@@ -40,6 +40,9 @@ export function Header(props: Props) {
                 Sources
               </MenuItem>
             </LinkComponent>
+            <LinkComponent href="/colere">
+              <MenuItem fontSize="xl">Colère</MenuItem>
+            </LinkComponent>
           </MenuList>
         </Menu>
         {/* <w3m-button /> */}
