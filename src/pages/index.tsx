@@ -14,6 +14,7 @@ import { createHelia } from 'helia'
 import { strings } from '@helia/strings'
 import { ethers } from 'ethers'
 import govContract from '../utils/Gov.json'
+import { createClient } from '@supabase/supabase-js'
 
 const customProvider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_ENDPOINT_URL)
 
@@ -31,6 +32,9 @@ export default function Home() {
 
   const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
   const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
+
+  const supabaseUrl: any = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey: any = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   async function computeCid(data: string): Promise<string> {
     const helia = await createHelia()
@@ -99,6 +103,8 @@ export default function Home() {
   const call = async () => {
     try {
       setIsLoading(true)
+
+      const supabase = createClient(supabaseUrl, supabaseKey)
 
       // Get the base URL dynamically
       const protocol = window.location.protocol
