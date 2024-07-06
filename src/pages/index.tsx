@@ -127,7 +127,7 @@ export default function Home() {
           {
             role: 'system',
             content:
-              "Le NFP c'est le Nouveau Front Populaire. Le FN, c'est le RN, c'est-à-dire le Front National (renommé récemment 'Rassemblement National'). Renaissance = Horizons = Ensemble pour la République = Ensemble = Macron = Attal = majorité présidentielle",
+              "Le NFP c'est le Nouveau Front Populaire (à ne pas confondre avec le FN). Le FN, c'est le RN, c'est-à-dire le Front National (renommé récemment 'Rassemblement National'). Renaissance = Horizons = Ensemble pour la République = Ensemble = Macron = Attal = majorité présidentielle",
           },
           { role: 'user', content },
           {
