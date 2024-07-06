@@ -1,8 +1,7 @@
 import * as React from 'react'
-import { Text, Button, useToast, FormControl, Textarea, FormHelperText, Box } from '@chakra-ui/react'
+import { Text, Button, useToast, FormControl, Textarea, FormHelperText } from '@chakra-ui/react'
 import { useState, useEffect } from 'react'
 import { useWeb3ModalProvider, useWeb3ModalAccount } from '@web3modal/ethers/react'
-import { LinkComponent } from '../components/layout/LinkComponent'
 import { HeadingComponent } from '../components/layout/HeadingComponent'
 import { Head } from '../components/layout/Head'
 import { SITE_NAME, SITE_DESCRIPTION } from '../utils/config'
@@ -15,17 +14,18 @@ import { strings } from '@helia/strings'
 import { ethers } from 'ethers'
 import govContract from '../utils/Gov.json'
 import { createClient } from '@supabase/supabase-js'
+import { useRouter } from 'next/router'
 
 const customProvider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_ENDPOINT_URL)
 
 export default function Home() {
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [input, setInput] = useState<string>(
-    "Quelle sont les differences au sujet de l'éducation entre le programme du NFP, celui de Ensemble, et celui du FN, s'il te plaît ?"
+    "Quelles sont les différences au sujet de l'éducation entre le programme du NFP, celui d'Ensemble, et celui du FN, s'il vous plaît ?"
   )
   const [corpusMatched, setCorpusMatched] = useState<boolean>(false)
   const [data, setData] = useState<string | null>(null)
-
+  const [dataFromSupabase, setDataFromSupabase] = useState<any[]>([])
   const { address, chainId, isConnected } = useWeb3ModalAccount()
   const { walletProvider } = useWeb3ModalProvider()
   const toast = useToast()
@@ -33,8 +33,8 @@ export default function Home() {
   const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
   const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
 
-  const supabaseUrl: any = process.env.NEXT_PUBLIC_SUPABASE_URL
-  const supabaseKey: any = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
   async function computeCid(data: string): Promise<string> {
     const helia = await createHelia()
@@ -43,41 +43,80 @@ export default function Home() {
     return myImmutableAddress.toString()
   }
 
-  // async function fetchAndExtractTextFromPDF(url: string): Promise<string> {
-  //   const response = await fetch(url)
-  //   if (!response.ok) {
-  //     throw new Error(`Failed to fetch PDF file from ${url}`)
-  //   }
-  //   const arrayBuffer = await response.arrayBuffer()
-  //   const buffer = Buffer.from(arrayBuffer)
-  //   const data = await pdfParse(buffer)
-  //   return data.text
-  // }
+  const fetchDataFromSupabase = async () => {
+    const apiUrl = '/api/getData'
+    try {
+      setIsLoading(true)
 
-  // async function fetchAllPDFTexts(baseUrl: string): Promise<string[]> {
-  //   const sourcesDir = path.join(process.cwd(), 'public', 'sources')
-  //   const files = fs.readdirSync(sourcesDir)
-  //   const pdfFiles = files.filter((file) => file.endsWith('.pdf'))
-  //   const pdfTexts: string[] = []
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
 
-  //   for (const file of pdfFiles) {
-  //     try {
-  //       const pdfUrl = `${baseUrl}/sources/${file}`
-  //       console.log('Fetching PDF from:', pdfUrl)
-  //       const pdfText = await fetchAndExtractTextFromPDF(pdfUrl)
-  //       pdfTexts.push(pdfText)
-  //     } catch (error) {
-  //       console.error(`Error processing file ${file}:`, error)
-  //     }
-  //   }
+      if (!response.ok) {
+        throw new Error('Failed to add entry')
+      }
+    } catch (error) {
+      console.error('Error adding entry:', error)
+      toast({
+        title: 'Oops',
+        description: 'Failed to add entry',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+    }
+  }
 
-  //   return pdfTexts
-  // }
+  async function checkLimit() {
+    const apiUrl = '/api/checkLimit'
+    try {
+      setIsLoading(true)
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to check limit')
+      }
+
+      const data = await response.json()
+
+      if (!data.within24Hours) {
+        return true
+      } else {
+        toast({
+          title: 'Doucement, la mule !',
+          description: "On ne peut poser qu'une seule question par jour à Fatou. Merci de ré-essayer demain.",
+          status: 'warning',
+          duration: 5000,
+          isClosable: true,
+        })
+      }
+    } catch (error) {
+      console.error('Error checking limit:', error)
+      toast({
+        title: 'Oops',
+        description: 'Failed to check limit',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   async function callOpenAI(content: string) {
     const completion = await openai.chat.completions.create({
       messages: [
-        { role: 'system', content: "Réponds systématiquement en français. Vovoie l'utilisateur" },
+        { role: 'system', content: "Réponds systématiquement en français. Vovoie l'utilisateur." },
         {
           role: 'system',
           content:
@@ -94,79 +133,67 @@ export default function Home() {
           content: `Base your response on this: ${corpus[0].combinedPdfText}`,
         },
       ],
-      model: 'gpt-4-turbo',
+      model: 'gpt-3.5-turbo',
     })
 
+    await fetchDataFromSupabase()
     return completion.choices[0]
   }
 
-  const call = async () => {
+  const verifyCorpus = async () => {
+    setIsLoading(true)
+
+    const check = await checkLimit()
+
+    if (check !== true) {
+      setIsLoading(false)
+      return
+    }
+
+    const result = await callOpenAI(input)
+    console.log('result:', result)
+    setData(result.message.content)
+
     try {
-      setIsLoading(true)
-
-      const supabase = createClient(supabaseUrl, supabaseKey)
-
-      // Get the base URL dynamically
-      const protocol = window.location.protocol
-      const host = window.location.host
-      const baseUrl = `${protocol}//${host}`
-
-      // const pdfTexts = await fetchAllPDFTexts(baseUrl)
-      // const combinedPdfText = pdfTexts.join('\n\n')
-
-      const result = await callOpenAI(input)
-      console.log('result:', result)
-      setData(result.message.content)
-
-      // Check if CID matches
       const cid = await computeCid(corpus[0].combinedPdfText)
-      console.log('result.cid:', cid)
-      // console.log('corpus[0].cid:', corpus[0].cid)
 
       const gov = new ethers.Contract(govContract.address, govContract.abi, customProvider)
       const corpusFromContract = await gov.corpus()
-      console.log('corpusFromContract:', corpusFromContract)
 
       if (cid === corpusFromContract) {
         setCorpusMatched(true)
       }
-      setIsLoading(false)
-    } catch (e: any) {
-      console.log('error:', e)
-      setIsLoading(false)
+    } catch (error) {
+      console.error('Error calling OpenAI or Ethereum smart contract:', error)
       toast({
-        title: 'Woops',
-        description: "Mille excuses, j'ai eu un souci ! Je vous invite à reposer votre question, s'il vous plaît.",
+        title: 'Oops',
+        description: 'An error occurred while processing your request.',
         status: 'error',
-        position: 'bottom',
-        variant: 'subtle',
-        duration: 9000,
+        duration: 5000,
         isClosable: true,
       })
     }
   }
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-        call()
-      }
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
+      verifyCorpus()
     }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [input])
+  }
 
   return (
     <>
       <Head title={SITE_NAME} description={SITE_DESCRIPTION} />
       <main>
         <FormControl>
-          <HeadingComponent as={'h3'}>Fatou sait tout !</HeadingComponent>
+          <HeadingComponent as="h3">Fatou sait tout !</HeadingComponent>
           <br />
-          <Textarea value={input} onChange={(e: any) => setInput(e.target.value)} placeholder="" />
+          <Textarea
+            value={input}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)}
+            placeholder=""
+            onKeyDown={handleKeyDown}
+          />
           <FormHelperText>Demander ce que vous voulez à Fatou...</FormHelperText>
         </FormControl>
 
@@ -174,8 +201,8 @@ export default function Home() {
         <Button
           colorScheme="blue"
           variant="outline"
-          type="submit"
-          onClick={call}
+          type="button"
+          onClick={verifyCorpus}
           isLoading={isLoading}
           loadingText="Fatou réfléchit..."
           spinnerPlacement="end">
@@ -185,11 +212,9 @@ export default function Home() {
         {data && (
           <>
             {corpusMatched && (
-              <LinkComponent href={'./sources'}>
-                <Text py={4} fontSize="12px">
-                  <strong>Les sources ont été vérifiées. ✅</strong>
-                </Text>
-              </LinkComponent>
+              <Text py={4} fontSize="12px">
+                <strong>Les sources ont été vérifiées. ✅</strong>
+              </Text>
             )}
             <Text py={4} fontSize="16px">
               <strong>Fatou dit:</strong>
@@ -200,14 +225,15 @@ export default function Home() {
                 p: ({ node, ...props }) => <p style={{ marginBottom: '16px' }} {...props} />,
                 li: ({ node, ...props }) => <li style={{ marginLeft: '20px', marginBottom: '10px' }} {...props} />,
               }}>
-              {String(data)}
+              {data}
             </ReactMarkdown>
           </>
         )}
-        <br />
-        <br />
-        <br />
-        <br />
+        {dataFromSupabase.length > 0 && (
+          <Text py={4} fontSize="16px">
+            {dataFromSupabase[0].payed}
+          </Text>
+        )}
       </main>
     </>
   )
