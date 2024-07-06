@@ -1,5 +1,3 @@
-// src/pages/api/checkLimit.tsx
-
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createClient } from '@supabase/supabase-js'
 
@@ -15,7 +13,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    // Query Supabase to find the latest entry with the given IP address
     const { data, error } = await supabase
       .from('requests')
       .select('created_at')
@@ -28,18 +25,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (data.length === 0) {
-      // No entries found for the given IP address
       return res.status(200).json({ within24Hours: false })
     }
 
-    // Get the timestamp of the latest entry
     const latestTimestamp = new Date(data[0].created_at).getTime()
     const currentTimestamp = Date.now()
 
-    // Calculate the difference in hours
     const hoursDifference = (currentTimestamp - latestTimestamp) / (1000 * 60 * 60)
 
-    // Check if the latest login was within the last 24 hours
     const within24Hours = hoursDifference <= 24
 
     res.status(200).json({ within24Hours })
