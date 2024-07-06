@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Text, Button, useToast, FormControl, Textarea, FormHelperText } from '@chakra-ui/react'
-import { useState, useEffect } from 'react'
-import { useWeb3ModalProvider, useWeb3ModalAccount } from '@web3modal/ethers/react'
+import { useState } from 'react'
+// import { useWeb3ModalProvider, useWeb3ModalAccount } from '@web3modal/ethers/react'
 import { HeadingComponent } from '../components/layout/HeadingComponent'
 import { Head } from '../components/layout/Head'
 import { SITE_NAME, SITE_DESCRIPTION } from '../utils/config'
@@ -13,30 +13,25 @@ import { createHelia } from 'helia'
 import { strings } from '@helia/strings'
 import { ethers } from 'ethers'
 import govContract from '../utils/Gov.json'
-import { createClient } from '@supabase/supabase-js'
-import { useRouter } from 'next/router'
 
 const customProvider = new ethers.JsonRpcProvider(process.env.NEXT_PUBLIC_RPC_ENDPOINT_URL)
 
 export default function Home() {
-  const [isLoading, setIsLoading] = useState<boolean>(false)
-  const [input, setInput] = useState<string>(
+  const [isLoading, setIsLoading] = useState(false)
+  const [input, setInput] = useState(
     "Quelles sont les différences au sujet de l'éducation entre le programme du NFP, celui d'Ensemble, et celui du FN, s'il vous plaît ?"
   )
-  const [corpusMatched, setCorpusMatched] = useState<boolean>(false)
-  const [data, setData] = useState<string | null>(null)
-  const [dataFromSupabase, setDataFromSupabase] = useState<any[]>([])
-  const { address, chainId, isConnected } = useWeb3ModalAccount()
-  const { walletProvider } = useWeb3ModalProvider()
+  const [corpusMatched, setCorpusMatched] = useState<any>(false)
+  const [data, setData] = useState<any>(null)
+  const [dataFromSupabase, setDataFromSupabase] = useState<any>([])
+  // const { address, chainId, isConnected } = useWeb3ModalAccount()
+  // const { walletProvider } = useWeb3ModalProvider()
   const toast = useToast()
 
   const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
   const openai = new OpenAI({ apiKey, dangerouslyAllowBrowser: true })
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-
-  async function computeCid(data: string): Promise<string> {
+  async function computeCid(data: any) {
     const helia = await createHelia()
     const s = strings(helia)
     const myImmutableAddress = await s.add(data)
@@ -56,17 +51,21 @@ export default function Home() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to add entry')
+        throw new Error('Failed to fetch data from Supabase')
       }
+
+      const data = await response.json()
+      setDataFromSupabase(data)
     } catch (error) {
-      console.error('Error adding entry:', error)
+      console.error('Error fetching data from Supabase:', error)
       toast({
-        title: 'Oops',
-        description: 'Failed to add entry',
+        title: 'Woops',
+        description: "J'ai eu un souci avec Supabase",
         status: 'error',
         duration: 5000,
         isClosable: true,
       })
+      setIsLoading(false)
     }
   }
 
@@ -98,12 +97,93 @@ export default function Home() {
           duration: 5000,
           isClosable: true,
         })
+        setIsLoading(false)
+        return false
       }
     } catch (error) {
       console.error('Error checking limit:', error)
       toast({
-        title: 'Oops',
-        description: 'Failed to check limit',
+        title: 'Woops',
+        description: "Désolé ! J'ai rencontré une erreur alors que je calculais votre limite max.",
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+      setIsLoading(false)
+      return false
+    }
+  }
+
+  async function callOpenAI(content: any) {
+    try {
+      const completion = await openai.chat.completions.create({
+        messages: [
+          { role: 'system', content: "Réponds systématiquement en français. Vovoie l'utilisateur." },
+          {
+            role: 'system',
+            content:
+              "Talk and answer as if you are Fatou, a young French woman. The additional text provided are Fatou's sources, so it should be referred to as 'my sources'. She will never express her own political opinion: she's here to help citizens make their choice. She considers that her personal political views are part of her privacy (intimité). She finds it important to go vote on June 30 and July 7. Instead of inviting people to go read the programs, she suggests asking another question.",
+          },
+          {
+            role: 'system',
+            content:
+              "Le NFP c'est le Nouveau Front Populaire. Le FN, c'est le RN, c'est-à-dire le Front National (renommé récemment 'Rassemblement National'). Renaissance = Horizons = Ensemble pour la République = Ensemble = Macron = Attal = majorité présidentielle",
+          },
+          { role: 'user', content },
+          {
+            role: 'user',
+            content: `Base your response on this: ${corpus[0].combinedPdfText}`,
+          },
+        ],
+        model: 'gpt-4o',
+      })
+
+      await fetchDataFromSupabase()
+      return completion.choices[0]
+    } catch (error) {
+      console.error('Error calling OpenAI:', error)
+      toast({
+        title: 'Ouh lou lou',
+        description: "Mille excuses ! J'ai rencontré une erreur liée à OpenAI. Pouvez-vous ré-essayer s'il vous plaît ?",
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+      setIsLoading(false)
+      return null
+    }
+  }
+
+  const verifyCorpus = async () => {
+    setIsLoading(true)
+
+    const limitCheckPassed = await checkLimit()
+
+    if (!limitCheckPassed) {
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const result: any = await callOpenAI(input)
+
+      if (result) {
+        setData(result.message.content)
+
+        const cid = await computeCid(corpus[0].combinedPdfText)
+
+        const gov = new ethers.Contract(govContract.address, govContract.abi, customProvider)
+        const corpusFromContract = await gov.corpus()
+
+        if (cid === corpusFromContract) {
+          setCorpusMatched(true)
+        }
+      }
+    } catch (error) {
+      console.error('Error in verifyCorpus:', error)
+      toast({
+        title: 'Erreur vérification',
+        description: "Pardon ! J'au rencontré une erreur pendant la vérification du corpus.",
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -113,69 +193,7 @@ export default function Home() {
     }
   }
 
-  async function callOpenAI(content: string) {
-    const completion = await openai.chat.completions.create({
-      messages: [
-        { role: 'system', content: "Réponds systématiquement en français. Vovoie l'utilisateur." },
-        {
-          role: 'system',
-          content:
-            "Talk and answer as if you are Fatou, a young French woman. The additional text provided are Fatou's sources, so it should be referred to as 'my sources'. She will never express her own political opinion: she's here to help citizens make their choice. She considers that her personal political views are part of her privacy (intimité). She finds it important to go vote on June 30 and July 7. Instead of inviting people to go read the programs, she suggests asking another question.",
-        },
-        {
-          role: 'system',
-          content:
-            "Le NFP c'est le Nouveau Front Populaire. Le FN, c'est le RN, c'est-à-dire le Front National (renommé récemment 'Rassemblement National'). Renaissance = Horizons = Ensemble pour la République = Ensemble = Macron = Attal = majorité présidentielle",
-        },
-        { role: 'user', content },
-        {
-          role: 'user',
-          content: `Base your response on this: ${corpus[0].combinedPdfText}`,
-        },
-      ],
-      model: 'gpt-3.5-turbo',
-    })
-
-    await fetchDataFromSupabase()
-    return completion.choices[0]
-  }
-
-  const verifyCorpus = async () => {
-    setIsLoading(true)
-
-    const check = await checkLimit()
-
-    if (check !== true) {
-      setIsLoading(false)
-      return
-    }
-
-    const result = await callOpenAI(input)
-    console.log('result:', result)
-    setData(result.message.content)
-
-    try {
-      const cid = await computeCid(corpus[0].combinedPdfText)
-
-      const gov = new ethers.Contract(govContract.address, govContract.abi, customProvider)
-      const corpusFromContract = await gov.corpus()
-
-      if (cid === corpusFromContract) {
-        setCorpusMatched(true)
-      }
-    } catch (error) {
-      console.error('Error calling OpenAI or Ethereum smart contract:', error)
-      toast({
-        title: 'Oops',
-        description: 'An error occurred while processing your request.',
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      })
-    }
-  }
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (event: any) => {
     if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
       verifyCorpus()
     }
@@ -188,12 +206,7 @@ export default function Home() {
         <FormControl>
           <HeadingComponent as="h3">Fatou sait tout !</HeadingComponent>
           <br />
-          <Textarea
-            value={input}
-            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value)}
-            placeholder=""
-            onKeyDown={handleKeyDown}
-          />
+          <Textarea value={input} onChange={(e) => setInput(e.target.value)} placeholder="" onKeyDown={handleKeyDown} />
           <FormHelperText>Demander ce que vous voulez à Fatou...</FormHelperText>
         </FormControl>
 
