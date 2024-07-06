@@ -41,8 +41,6 @@ export default function Home() {
   const fetchDataFromSupabase = async () => {
     const apiUrl = '/api/getData'
     try {
-      setIsLoading(true)
-
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -72,8 +70,6 @@ export default function Home() {
   async function checkLimit() {
     const apiUrl = '/api/checkLimit'
     try {
-      setIsLoading(true)
-
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
@@ -135,7 +131,7 @@ export default function Home() {
             content: `Base your response on this: ${corpus[0].combinedPdfText}`,
           },
         ],
-        model: 'gpt-4o',
+        model: 'gpt-4-turbo',
       })
 
       await fetchDataFromSupabase()
@@ -144,7 +140,7 @@ export default function Home() {
       console.error('Error calling OpenAI:', error)
       toast({
         title: 'Mamma mia !',
-        description: "Mille excuses ! J'ai rencontré une erreur liée à OpenAI. Pouvez-vous ré-essayer s'il vous plaît ?",
+        description: "Vous avez visiblement passé la limite autorisée pour aujourd'hui. Revenez demain !",
         status: 'error',
         duration: 5000,
         isClosable: true,
