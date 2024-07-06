@@ -25,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (data.length === 0) {
-      return res.status(200).json({ within24Hours: false })
+      return res.status(200).json({ within1Hour: false })
     }
 
     const latestTimestamp = new Date(data[0].created_at).getTime()
@@ -33,11 +33,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const hoursDifference = (currentTimestamp - latestTimestamp) / (1000 * 60 * 60)
 
-    const within24Hours = hoursDifference <= 24
+    const within1Hour = hoursDifference <= 1
 
-    res.status(200).json({ within24Hours })
+    res.status(200).json({ within1Hour })
   } catch (error: any) {
-    console.error('Error checking login limit:', error.message)
-    res.status(500).json({ error: 'Failed to check login limit' })
+    console.error('Error checking request limit:', error.message)
+    res.status(500).json({ error: 'Failed to check request limit' })
   }
 }

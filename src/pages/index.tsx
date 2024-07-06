@@ -60,7 +60,7 @@ export default function Home() {
       console.error('Error fetching data from Supabase:', error)
       toast({
         title: 'Woops',
-        description: "J'ai eu un souci avec Supabase",
+        description: "Déso, j'ai eu un souci avec Supabase",
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -92,7 +92,7 @@ export default function Home() {
       } else {
         toast({
           title: 'Doucement, la mule !',
-          description: "On ne peut poser qu'une seule question par jour à Fatou. Merci de ré-essayer demain.",
+          description: "On ne peut poser qu'une seule question par heure à Fatou. Merci de ré-essayer dans un moment.",
           status: 'warning',
           duration: 5000,
           isClosable: true,
@@ -143,7 +143,7 @@ export default function Home() {
     } catch (error) {
       console.error('Error calling OpenAI:', error)
       toast({
-        title: 'Ouh lou lou',
+        title: 'Mamma mia !',
         description: "Mille excuses ! J'ai rencontré une erreur liée à OpenAI. Pouvez-vous ré-essayer s'il vous plaît ?",
         status: 'error',
         duration: 5000,
