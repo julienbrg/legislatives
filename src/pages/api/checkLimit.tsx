@@ -5,6 +5,9 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 const supabase = createClient(supabaseUrl, supabaseKey)
 
+const REQUEST_LIMIT = 3
+const DAY_IN_MS = 24 * 60 * 60 * 1000
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const ip_address = (req.headers['x-forwarded-for'] as string)?.split(',').shift() || req.socket.remoteAddress
 
@@ -13,31 +16,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { data, error } = await supabase
+    const twentyFourHoursAgo = Date.now() - DAY_IN_MS
+
+    const { data: requestCounts, error } = await supabase
       .from('requests')
-      .select('created_at')
+      .select('*', { count: 'exact' })
       .eq('ip_address', ip_address)
-      .order('created_at', { ascending: false })
-      .limit(1)
+      .gt('created_at', new Date(twentyFourHoursAgo).toISOString())
 
     if (error) {
       throw error
     }
 
-    if (data.length === 0) {
-      return res.status(200).json({ within1Hour: false })
+    const requestCount = requestCounts.length
+
+    if (requestCount === 0) {
+      console.log('No requests found within the last 24 hours')
+
+      return res.status(200).json({ within24Hours: false })
     }
 
-    const latestTimestamp = new Date(data[0].created_at).getTime()
-    const currentTimestamp = Date.now()
+    if (requestCount >= REQUEST_LIMIT) {
+      return res.status(200).json({ within24Hours: true })
+    }
 
-    const hoursDifference = (currentTimestamp - latestTimestamp) / (1000 * 60 * 60)
+    await recordRequest(ip_address)
 
-    const within1Hour = hoursDifference <= 1
-
-    res.status(200).json({ within1Hour })
+    return res.status(200).json({ within24Hours: false })
   } catch (error: any) {
     console.error('Error checking request limit:', error.message)
     res.status(500).json({ error: 'Failed to check request limit' })
+  }
+}
+
+async function recordRequest(ip_address: string) {
+  try {
+    await supabase.from('requests').insert([{ ip_address }])
+  } catch (error: any) {
+    console.error('Error recording request:', error.message)
+    throw error
   }
 }

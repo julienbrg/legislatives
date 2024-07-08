@@ -1,7 +1,6 @@
 import * as React from 'react'
-import { Text, Button, useToast, FormControl, Textarea, FormHelperText } from '@chakra-ui/react'
+import { Text, Button, useToast, FormControl, Textarea, FormHelperText, Link } from '@chakra-ui/react'
 import { useState } from 'react'
-// import { useWeb3ModalProvider, useWeb3ModalAccount } from '@web3modal/ethers/react'
 import { HeadingComponent } from '../components/layout/HeadingComponent'
 import { Head } from '../components/layout/Head'
 import { SITE_NAME, SITE_DESCRIPTION } from '../utils/config'
@@ -21,11 +20,9 @@ export default function Home() {
   const [input, setInput] = useState(
     "Quelles sont les différences au sujet de l'éducation entre le programme du NFP, celui d'Ensemble, et celui du FN, s'il vous plaît ?"
   )
-  const [corpusMatched, setCorpusMatched] = useState<any>(false)
+  const [corpusMatched, setCorpusMatched] = useState(false)
   const [data, setData] = useState<any>(null)
   const [dataFromSupabase, setDataFromSupabase] = useState<any>([])
-  // const { address, chainId, isConnected } = useWeb3ModalAccount()
-  // const { walletProvider } = useWeb3ModalProvider()
   const toast = useToast()
 
   const apiKey = process.env.NEXT_PUBLIC_OPENAI_API_KEY || ''
@@ -39,7 +36,7 @@ export default function Home() {
   }
 
   const fetchDataFromSupabase = async () => {
-    const apiUrl = '/api/getData'
+    const apiUrl = '/api/insert'
     try {
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -68,7 +65,7 @@ export default function Home() {
     }
   }
 
-  async function checkLimit() {
+  const checkLimit = async () => {
     const apiUrl = '/api/checkLimit'
     try {
       const response = await fetch(apiUrl, {
@@ -84,24 +81,16 @@ export default function Home() {
 
       const data = await response.json()
 
-      if (!data.within24Hours) {
+      if (data.within24Hours === true) {
         return true
       } else {
-        toast({
-          title: 'Doucement, la mule !',
-          description: "On ne peut poser qu'une seule question par heure à Fatou. Merci de ré-essayer dans un moment.",
-          status: 'warning',
-          duration: 5000,
-          isClosable: true,
-        })
-        setIsLoading(false)
         return false
       }
     } catch (error) {
       console.error('Error checking limit:', error)
       toast({
         title: 'Woops',
-        description: "Désolé ! J'ai rencontré une erreur alors que je calculais votre limite max.",
+        description: "Désolé ! J'ai rencontré une erreur lors de la vérification de votre limite.",
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -111,7 +100,33 @@ export default function Home() {
     }
   }
 
-  async function callOpenAI(content: any) {
+  const verifyCorpus = async (result: any) => {
+    try {
+      if (result) {
+        setData(result.message.content)
+
+        const cid = await computeCid(corpus[0].combinedPdfText)
+
+        const gov = new ethers.Contract(govContract.address, govContract.abi, customProvider)
+        const corpusFromContract = await gov.corpus()
+
+        if (cid === corpusFromContract) {
+          setCorpusMatched(true)
+        }
+      }
+    } catch (error) {
+      console.error('Error in verifyCorpus:', error)
+      toast({
+        title: 'Erreur vérification',
+        description: "Pardon ! J'ai rencontré une erreur pendant la vérification du corpus.",
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+    }
+  }
+
+  const callOpenAI = async (content: any) => {
     try {
       const completion = await openai.chat.completions.create({
         messages: [
@@ -141,7 +156,7 @@ export default function Home() {
       console.error('Error calling OpenAI:', error)
       toast({
         title: 'Mamma mia !',
-        description: "Vous avez visiblement passé la limite autorisée pour aujourd'hui. Revenez demain !",
+        description: "J'ai eu un souci, merci de réessayer un peu plus tard.",
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -151,46 +166,31 @@ export default function Home() {
     }
   }
 
-  const verifyCorpus = async () => {
+  const ask = async () => {
     setIsLoading(true)
 
     const limitCheckPassed = await checkLimit()
 
-    if (!limitCheckPassed) {
+    console.log('limitCheckPassed:', limitCheckPassed)
+    if (limitCheckPassed === true || limitCheckPassed === null) {
       setIsLoading(false)
-      return
-    }
-
-    try {
-      const result: any = await callOpenAI(input)
-
-      if (result) {
-        setData(result.message.content)
-
-        const cid = await computeCid(corpus[0].combinedPdfText)
-
-        const gov = new ethers.Contract(govContract.address, govContract.abi, customProvider)
-        const corpusFromContract = await gov.corpus()
-
-        if (cid === corpusFromContract) {
-          setCorpusMatched(true)
-        }
-      }
-    } catch (error) {
-      console.error('Error in verifyCorpus:', error)
       toast({
-        title: 'Erreur vérification',
-        description: "Pardon ! J'au rencontré une erreur pendant la vérification du corpus.",
-        status: 'error',
+        title: 'Doucement !',
+        description: "Vous avez déjà posé trois questions aujourd'hui. Réessayez demain !",
+        status: 'warning',
         duration: 5000,
         isClosable: true,
       })
+      return
     }
+
+    const result = await callOpenAI(input)
+    await verifyCorpus(result)
   }
 
   const handleKeyDown = (event: any) => {
     if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
-      verifyCorpus()
+      ask()
     }
   }
 
@@ -200,6 +200,10 @@ export default function Home() {
       <main>
         <FormControl>
           <HeadingComponent as="h3">Fatou sait tout !</HeadingComponent>
+          <Text py={4} fontSize="16px">
+            Vous pouvez poser 3 questions maximum par jour et par personne. Essayez par exemple de demander à Fatou de vous expliquer les différences
+            de chaque programme sur tel ou tel sujet qui vous intéresse.
+          </Text>
           <br />
           <Textarea value={input} onChange={(e) => setInput(e.target.value)} placeholder="" onKeyDown={handleKeyDown} />
           <FormHelperText>Demander ce que vous voulez à Fatou...</FormHelperText>
@@ -210,7 +214,7 @@ export default function Home() {
           colorScheme="blue"
           variant="outline"
           type="button"
-          onClick={verifyCorpus}
+          onClick={ask}
           isLoading={isLoading}
           loadingText="Fatou réfléchit..."
           spinnerPlacement="end">
@@ -220,9 +224,16 @@ export default function Home() {
         {data && (
           <>
             {corpusMatched && (
-              <Text py={4} fontSize="12px">
-                <strong>Les sources ont été vérifiées. ✅</strong>
-              </Text>
+              <Link
+                href={`https://github.com/julienbrg/legislatives/blob/1e5ce0c4df93ed33a48fe6086ba96aa443a4aa47/public/corpus.json#L4`}
+                target="_blank"
+                rel="noopener noreferrer"
+                // color={'#45a2f8'}
+                _hover={{ color: '#8c1c84' }}>
+                <Text py={4} fontSize="12px">
+                  <strong>Les sources ont été vérifiées. ✅</strong>
+                </Text>
+              </Link>
             )}
             <Text py={4} fontSize="16px">
               <strong>Fatou dit:</strong>
