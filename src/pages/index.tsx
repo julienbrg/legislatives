@@ -54,6 +54,7 @@ export default function Home() {
 
       const data = await response.json()
       setDataFromSupabase(data)
+      setIsLoading(false)
     } catch (error) {
       console.error('Error fetching data from Supabase:', error)
       toast({
@@ -184,8 +185,6 @@ export default function Home() {
         duration: 5000,
         isClosable: true,
       })
-    } finally {
-      setIsLoading(false)
     }
   }
 
