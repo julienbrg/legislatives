@@ -1,7 +1,7 @@
 import React from 'react'
 import { Flex, useColorModeValue, Spacer, Heading, Menu, MenuButton, MenuList, MenuItem, IconButton } from '@chakra-ui/react'
 import { AddIcon, ExternalLinkIcon, RepeatIcon, EditIcon, HamburgerIcon, ArrowBackIcon, InfoIcon } from '@chakra-ui/icons'
-import { FaEthereum, FaEuroSign, FaHome, FaFeather } from 'react-icons/fa'
+import { FaEthereum, FaEuroSign, FaHome, FaFeather, FaVoteYea } from 'react-icons/fa'
 import { LinkComponent } from './LinkComponent'
 import { ThemeSwitcher } from './ThemeSwitcher'
 import { SITE_NAME } from '../../utils/config'
@@ -43,6 +43,11 @@ export function Header(props: Props) {
             {/* <LinkComponent href="/colere">
               <MenuItem fontSize="xl">Colère</MenuItem>
             </LinkComponent> */}
+            <LinkComponent href="/mon-vote">
+              <MenuItem fontSize="xl" icon={<FaVoteYea />}>
+                Mon vote
+              </MenuItem>
+            </LinkComponent>
           </MenuList>
         </Menu>
         {/* <w3m-button /> */}
