@@ -9,10 +9,9 @@ interface Quote {
 
 export default function Colere() {
   const [quotes, setQuotes] = useState<Quote[]>([])
-  const [currentPage, setCurrentPage] = useState<number | undefined>(undefined) // State to track currently open accordion item
+  const [currentPage, setCurrentPage] = useState<number | undefined>(undefined)
 
   useEffect(() => {
-    // Fetching data from colere.json
     const fetchData = async () => {
       try {
         const response = await fetch('../../../colere.json')
@@ -31,10 +30,8 @@ export default function Colere() {
 
   const handleAccordionClick = (index: number) => {
     if (currentPage === index) {
-      // If clicking on the currently open item, close it
       setCurrentPage(undefined)
     } else {
-      // Otherwise, open the clicked item
       setCurrentPage(index)
     }
   }

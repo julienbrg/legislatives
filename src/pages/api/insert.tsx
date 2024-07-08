@@ -8,13 +8,12 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const ip_address = (req.headers['x-forwarded-for'] as string)?.split(',').shift() || req.socket.remoteAddress
-    const { data, error } = await supabase.from('requests').insert([{ ip_address }])
+    const { error } = await supabase.from('requests').insert([{ ip_address }])
 
     if (error) {
       throw error
     }
 
-    console.log('Inserted data:', data)
     res.status(201).json({ message: 'Data inserted successfully' })
   } catch (error: any) {
     console.error('Error inserting data into Supabase:', error.message)
