@@ -7,7 +7,7 @@ const supabase = createClient(supabaseUrl, supabaseKey)
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    const ip_address = req.headers['x-forwarded-for'] || req.connection.remoteAddress
+    const ip_address = (req.headers['x-forwarded-for'] as string)?.split(',').shift() || req.socket.remoteAddress
     const { data, error } = await supabase.from('requests').insert([{ ip_address }])
 
     if (error) {

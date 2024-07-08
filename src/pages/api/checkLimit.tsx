@@ -6,7 +6,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const ip_address = req.headers['x-forwarded-for'] || req.connection.remoteAddress
+  const ip_address = (req.headers['x-forwarded-for'] as string)?.split(',').shift() || req.socket.remoteAddress
 
   if (typeof ip_address !== 'string') {
     return res.status(400).json({ error: 'Invalid IP address' })
