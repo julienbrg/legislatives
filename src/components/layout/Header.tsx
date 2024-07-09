@@ -43,11 +43,11 @@ export function Header(props: Props) {
             {/* <LinkComponent href="/colere">
               <MenuItem fontSize="xl">Colère</MenuItem>
             </LinkComponent> */}
-            <LinkComponent href="/mon-vote">
+            {/* <LinkComponent href="/mon-vote">
               <MenuItem fontSize="xl" icon={<FaVoteYea />}>
                 Mon vote
               </MenuItem>
-            </LinkComponent>
+            </LinkComponent> */}
           </MenuList>
         </Menu>
         {/* <w3m-button /> */}

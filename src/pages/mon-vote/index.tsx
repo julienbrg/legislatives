@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
-import { FormControl, Text, Textarea, FormHelperText, Alert, AlertIcon, FormLabel, Input } from '@chakra-ui/react'
+import { FormControl, Text, Textarea, FormHelperText, Alert, AlertIcon, FormLabel, Input, Box } from '@chakra-ui/react'
 import { HeadingComponent } from '../../components/layout/HeadingComponent'
+import { WarningIcon } from '@chakra-ui/icons'
 
 export default function MonVote() {
-  const [vote, setVote] = useState("J'ai voté pour le candidat du NFP.")
-  const [circo, setCirco] = useState('1ère circonscription de Marseille')
-  const [explication, setExplication] = useState("J'aurais bien aimé...")
-  const [pseudo, setPseudo] = useState('Batman')
+  const [vote, setVote] = useState('')
+  const [circo, setCirco] = useState('')
+  const [explication, setExplication] = useState('')
+  const [pseudo, setPseudo] = useState('')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -21,10 +22,10 @@ export default function MonVote() {
 
   return (
     <main>
-      <Alert status="warning" mb={4}>
-        <AlertIcon />
-        Attention : cette page n&apos;est pas prête.
-      </Alert>
+      <Box borderWidth="3px" borderStyle="solid" borderColor="red.500" p={4} borderRadius="xl" mb={7} display="flex" alignItems="center">
+        <WarningIcon color="red.500" mr={3} />
+        <Text fontWeight="bold">Attention : cette page n&apos;est pas prête.</Text>
+      </Box>
       <FormControl>
         <HeadingComponent as="h3">Explication de vote</HeadingComponent>
         <Text py={4} fontSize="16px"></Text>
@@ -33,18 +34,25 @@ export default function MonVote() {
         <Input value={circo} onChange={(e: any) => setCirco(e.target.value)} placeholder="" />
         <FormHelperText>Quelle circonscription ?</FormHelperText>
         <br />
-        <FormLabel>Qu&apos;avez-vous voté ?</FormLabel>
+        <br />
+        <FormLabel>Pour qui avez-vous voté ?</FormLabel>
         <Textarea value={vote} onChange={(e) => setVote(e.target.value)} placeholder="" />
-        <FormHelperText>Quel candidat avez-vous choisi ?</FormHelperText>
+        <FormHelperText>Quel est le nom du candidat ou du parti pour qui vous avez voté ?</FormHelperText>
+        <br />
         <br />
         <FormLabel>Quelles réformes auriez-vous le plus souhaité ?</FormLabel>
         <Textarea value={explication} onChange={(e) => setExplication(e.target.value)} placeholder="" />
         <FormHelperText></FormHelperText>
         <br />
-        <FormLabel>Pseudo</FormLabel>
+        <br />
+        <FormLabel>Votre pseudo</FormLabel>
         <Input value={pseudo} onChange={(e: any) => setPseudo(e.target.value)} placeholder="" />
-        <FormHelperText>Les données sont anonymisées</FormHelperText>
+        <FormHelperText>Les données sont anonymisées. Merci d'indiquer un pseudo.</FormHelperText>
       </FormControl>
+      <br />
+      <br />
+      <br />
+      <br />
     </main>
   )
 }

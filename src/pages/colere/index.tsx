@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Box, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Alert, AlertIcon } from '@chakra-ui/react'
+import { Box, Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon, Alert, AlertIcon, Text } from '@chakra-ui/react'
 import { HeadingComponent } from '../../components/layout/HeadingComponent'
+import { WarningIcon } from '@chakra-ui/icons'
 
 interface Quote {
   quote: string
@@ -38,10 +39,10 @@ export default function Colere() {
 
   return (
     <main>
-      <Alert status="warning" mb={4}>
-        <AlertIcon />
-        Attention : cette page n&apos;est pas prête.
-      </Alert>
+      <Box borderWidth="3px" borderStyle="solid" borderColor="red.500" p={4} borderRadius="xl" mb={7} display="flex" alignItems="center">
+        <WarningIcon color="red.500" mr={3} />
+        <Text fontWeight="bold">Attention : cette page n&apos;est pas prête.</Text>
+      </Box>
 
       <Accordion allowToggle defaultIndex={currentPage} allowMultiple>
         {quotes.map((quote, index) => (
