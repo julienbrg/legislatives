@@ -47,7 +47,7 @@ export default function MonVote() {
         <br />
         <FormLabel>Votre pseudo</FormLabel>
         <Input value={pseudo} onChange={(e: any) => setPseudo(e.target.value)} placeholder="" />
-        <FormHelperText>Les données sont anonymisées. Merci d'indiquer un pseudo.</FormHelperText>
+        <FormHelperText>Les données sont anonymisées. Merci d&apos;indiquer un pseudo.</FormHelperText>
       </FormControl>
       <br />
       <br />
