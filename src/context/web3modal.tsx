@@ -36,7 +36,12 @@ const metadata = {
 
 const ethersConfig = defaultConfig({
   metadata,
-  enableEmail: true,
+  auth: {
+    email: true,
+    socials: ['google', 'x', 'github', 'discord', 'apple'],
+    showWallets: true,
+    walletFeatures: true,
+  },
 })
 
 createWeb3Modal({
