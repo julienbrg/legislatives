@@ -49,6 +49,18 @@ export default function Gouv() {
   }, [limit])
 
   const handleSubmit = async () => {
+    // Check for empty required fields
+    if (!firstname || !location || !budget || !action1) {
+      toast({
+        title: 'Incomplet',
+        description: "Il nous manque une de ces infos avant d'envoyer : prénom, lieu, budget, et mesure 1.",
+        status: 'error',
+        duration: 9000,
+        isClosable: true,
+      })
+      return
+    }
+
     try {
       setIsLoading(true)
 
@@ -122,7 +134,10 @@ export default function Gouv() {
         <br />
         <HeadingComponent as="h3">Mesures</HeadingComponent>
 
-        <Text fontSize="16px">Quelles sont les 10 mesures qui pourraient, selon vous, faire consensus au sein de l&apos;assemblée ?</Text>
+        <Text fontSize="16px">
+          Quelles sont les 10 mesures qui pourraient être votées par une majorité de députés l&apos;assemblée ?{' '}
+          <strong>Il faut que ces propositions soient réalisables</strong>.
+        </Text>
         <br />
         <br />
         <FormLabel>Mesure 1</FormLabel>
