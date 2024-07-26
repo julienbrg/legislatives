@@ -1,8 +1,25 @@
 import { useState, useEffect, useCallback } from 'react'
-import { FormControl, Text, Textarea, FormHelperText, FormLabel, Input, Button, useToast, Box } from '@chakra-ui/react'
+import {
+  FormControl,
+  Text,
+  Textarea,
+  FormHelperText,
+  FormLabel,
+  Input,
+  Button,
+  useToast,
+  Box,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  useDisclosure,
+} from '@chakra-ui/react'
 import { HeadingComponent } from '../../components/layout/HeadingComponent'
 import { useWeb3ModalProvider, useWeb3ModalAccount } from '@web3modal/ethers/react'
-import { ethers, BrowserProvider, JsonRpcSigner, Eip1193Provider } from 'ethers'
+import { BrowserProvider, JsonRpcSigner, Eip1193Provider } from 'ethers'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 import { Personhood } from '@anima-protocol/personhood-sdk-react'
@@ -20,7 +37,6 @@ interface Programme {
 
 export default function Gouv() {
   const [isLoading, setIsLoading] = useState(false)
-  const [isLoadingPop, setIsLoadingPop] = useState(false)
   const [budget, setBudget] = useState('')
   const [action1, setAction1] = useState('')
   const [action2, setAction2] = useState('')
@@ -37,6 +53,7 @@ export default function Gouv() {
   const { isConnected } = useWeb3ModalAccount()
   const { walletProvider } = useWeb3ModalProvider()
   const provider: Eip1193Provider | undefined = walletProvider
+  const { isOpen, onOpen, onClose } = useDisclosure()
 
   const fetchProgrammes = async (limit: number) => {
     try {
@@ -55,7 +72,7 @@ export default function Gouv() {
     }
   }
 
-  const pop = async () => {
+  const initiatePop = async () => {
     if (!provider) {
       toast({
         title: 'No Wallet',
@@ -68,8 +85,6 @@ export default function Gouv() {
     }
 
     try {
-      setIsLoadingPop(true)
-
       const ethersProvider = new BrowserProvider(provider as any)
       const signer = await ethersProvider.getSigner()
       setSigner(signer)
@@ -89,11 +104,7 @@ export default function Gouv() {
       }
 
       const data = await response.json()
-      console.log('PoP session data:', data)
-      console.log('PoP session data.data:', data.data)
       setSessionId(data.data.session_id)
-      setIsLoadingPop(false)
-      console.log('userAddress:', userAddress, '\nsigner: ', signer, 'sessionId:', sessionId, 'data.data.session_id:', data.data.session_id)
     } catch (error) {
       console.error('Error initializing PoP:', error)
       toast({
@@ -103,7 +114,6 @@ export default function Gouv() {
         duration: 5000,
         isClosable: true,
       })
-      setIsLoadingPop(false)
     }
   }
 
@@ -117,6 +127,8 @@ export default function Gouv() {
   }, [limit, isConnected])
 
   const handleSubmit = async () => {
+    setIsLoading(true)
+
     if (!firstname || !location || !budget || !action1) {
       toast({
         title: 'Incomplet',
@@ -125,12 +137,32 @@ export default function Gouv() {
         duration: 9000,
         isClosable: true,
       })
+      setIsLoading(false)
       return
     }
 
-    try {
-      setIsLoading(true)
+    // Check if user is logged in
+    if (!isConnected) {
+      toast({
+        title: 'Disconnected',
+        position: 'bottom',
+        description: 'Merci de connecter votre wallet avant toute chose.',
+        status: 'info',
+        variant: 'subtle',
+        duration: 9000,
+        isClosable: true,
+      })
+      console.log('user disconnected')
+      setIsLoading(false)
+      return
+    }
 
+    // Initiate PoP process
+    await initiatePop()
+
+    onOpen() // Open the modal after initializing the PoP session
+
+    try {
       const response = await fetch('/api/gouvWrite', {
         method: 'POST',
         headers: {
@@ -322,21 +354,18 @@ export default function Gouv() {
       <br />
       <br />
       <br />
-      <Button
-        colorScheme="red"
-        variant="outline"
-        type="button"
-        onClick={pop}
-        isLoading={isLoadingPop}
-        loadingText="PoPping..."
-        spinnerPlacement="end">
-        PoP
-      </Button>
-      {userAddress && signer && sessionId && <Personhood onFinish={shared} sessionId={sessionId} signCallback={sign} walletAddress={userAddress} />}
-      <br />
-      <br />
-      <br />
-      <br />
+      <Modal isOpen={isOpen} onClose={onClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Nous avons besoin de vérifier que vous êtes un humain.</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            {userAddress && signer && sessionId && (
+              <Personhood onFinish={shared} sessionId={sessionId} signCallback={sign} walletAddress={userAddress} />
+            )}
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </main>
   )
 }
