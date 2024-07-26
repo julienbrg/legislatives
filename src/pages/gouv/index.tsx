@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { FormControl, Text, Textarea, FormHelperText, FormLabel, Input, Button, useToast, Box } from '@chakra-ui/react'
 import { HeadingComponent } from '../../components/layout/HeadingComponent'
+import { useWeb3ModalProvider, useWeb3ModalAccount } from '@web3modal/ethers/react'
+import { BrowserProvider, JsonRpcSigner, Eip1193Provider } from 'ethers'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { Personhood } from '@anima-protocol/personhood-sdk-react'
 
 interface Programme {
   id: number
@@ -24,12 +27,19 @@ export default function Gouv() {
   const [firstname, setFirstname] = useState('')
   const [location, setLocation] = useState('')
   const [programmes, setProgrammes] = useState<Programme[]>([])
-  const [limit, setLimit] = useState(10)
-  const toast = useToast()
+  const [signer, setSigner] = useState<JsonRpcSigner | null>(null)
+  const [userAddress, setUserAddress] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [isPersonhoodVisible, setIsPersonhoodVisible] = useState(false)
 
-  const fetchProgrammes = async (limit: number) => {
+  const toast = useToast()
+  const { isConnected } = useWeb3ModalAccount()
+  const { walletProvider } = useWeb3ModalProvider()
+  const provider: Eip1193Provider | undefined = walletProvider
+
+  const fetchProgrammes = async () => {
     try {
-      const response = await fetch(`/api/gouvRead?limit=${limit}`)
+      const response = await fetch('/api/gouvRead')
       const data = await response.json()
       setProgrammes(data)
     } catch (error) {
@@ -44,12 +54,61 @@ export default function Gouv() {
     }
   }
 
+  const initiatePop = async () => {
+    if (!provider) {
+      toast({
+        title: 'No Wallet',
+        description: 'Please connect your wallet first!',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+      setIsPersonhoodVisible(false)
+      setIsLoading(false)
+      return
+    }
+
+    try {
+      const ethersProvider = new BrowserProvider(provider as any)
+      const signer = await ethersProvider.getSigner()
+      setSigner(signer)
+      const address = await signer.getAddress()
+      setUserAddress(address)
+
+      const response = await fetch(`/api/popInit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ address }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to initialize PoP session')
+      }
+
+      const data = await response.json()
+      setSessionId(data.data.session_id)
+      setIsPersonhoodVisible(true)
+    } catch (error) {
+      console.error('Error initializing PoP:', error)
+      toast({
+        title: 'Failed',
+        description: 'Sorry for that...',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+    }
+  }
+
   useEffect(() => {
-    fetchProgrammes(limit)
-  }, [limit])
+    fetchProgrammes()
+  }, [])
 
   const handleSubmit = async () => {
-    // Check for empty required fields
+    setIsLoading(true)
+
     if (!firstname || !location || !budget || !action1) {
       toast({
         title: 'Incomplet',
@@ -58,56 +117,83 @@ export default function Gouv() {
         duration: 9000,
         isClosable: true,
       })
+      setIsLoading(false)
       return
     }
 
-    try {
-      setIsLoading(true)
+    await initiatePop()
 
-      const response = await fetch('/api/gouvWrite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstname,
-          location,
-          budget,
-          action1,
-          action2,
-          action3,
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to submit data')
-      }
-
-      const result = await response.json()
-      console.log('Form submission result:', result)
-      toast({
-        title: 'Bien reçu ! 🎉',
-        description: 'Merci pour votre précieuse contribution.',
-        status: 'success',
-        duration: 9000,
-        isClosable: true,
-      })
-      setIsLoading(false)
-      fetchProgrammes(limit) // Fetch updated programmes list
-    } catch (error) {
-      console.error('Form submission error:', error)
-      toast({
-        title: 'Woops',
-        description: "Déso, j'ai eu un souci avec Supabase",
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      })
-      setIsLoading(false)
-    }
+    setIsLoading(false)
   }
 
   const maxLength = 500
+
+  const sign = useCallback(
+    (payload: string | object) => {
+      const message = typeof payload === 'string' ? payload : JSON.stringify(payload)
+      return signer!.signMessage(message)
+    },
+    [signer]
+  )
+
+  const shared = useCallback(
+    async (e: { info: string }) => {
+      setIsPersonhoodVisible(false)
+
+      try {
+        const response = await fetch('/api/gouvWrite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            firstname,
+            location,
+            budget,
+            action1,
+            action2,
+            action3,
+            wallet_address: userAddress,
+          }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          if (errorData.code === 'WALLET_ALREADY_USED') {
+            toast({
+              title: 'Déjà envoyé',
+              description: "Vous avez déjà donné votre avis. Il n'est pas possible de donner plusieurs réponse",
+              status: 'error',
+              duration: 9000,
+              isClosable: true,
+            })
+          } else {
+            throw new Error('Failed to submit data')
+          }
+          return
+        }
+
+        const result = await response.json()
+        toast({
+          title: 'Bien reçu ! 🎉',
+          description: 'Merci pour votre précieuse contribution.',
+          status: 'success',
+          duration: 9000,
+          isClosable: true,
+        })
+        fetchProgrammes()
+      } catch (error) {
+        toast({
+          title: 'Woops',
+          description: "Déolé, votre contribution n'a pas été correctement enregistrée.",
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        })
+      }
+    },
+    [firstname, location, budget, action1, action2, action3, userAddress]
+  )
 
   return (
     <main>
@@ -176,16 +262,29 @@ export default function Gouv() {
         <br />
         <br />
       </FormControl>
-      <Button
-        colorScheme="blue"
-        variant="outline"
-        type="button"
-        onClick={handleSubmit}
-        isLoading={isLoading}
-        loadingText="Envoi en cours..."
-        spinnerPlacement="end">
-        Envoyer
-      </Button>
+      {!isPersonhoodVisible ? (
+        <Button
+          colorScheme="blue"
+          variant="outline"
+          type="button"
+          onClick={handleSubmit}
+          isLoading={isLoading}
+          loadingText="Envoi en cours..."
+          spinnerPlacement="end">
+          Envoyer
+        </Button>
+      ) : (
+        userAddress &&
+        signer &&
+        sessionId && (
+          <>
+            <Text fontSize="16px">
+              <strong>Merci de cliquer dans le cercle ci-dessous :</strong>
+            </Text>
+            <br /> <Personhood onFinish={shared} sessionId={sessionId} signCallback={sign} walletAddress={userAddress} />
+          </>
+        )
+      )}
       <br />
       <br />
 
@@ -232,17 +331,7 @@ export default function Gouv() {
             )}
           </Box>
         ))}
-        <br />
-        {programmes.length >= limit && (
-          <Button onClick={() => setLimit(limit + 10)} colorScheme="green" size={'sm'}>
-            Voir plus de réponses
-          </Button>
-        )}
       </Box>
-      <br />
-      <br />
-      <br />
-      <br />
       <br />
       <br />
       <br />

@@ -12,9 +12,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { firstname, location, budget, action1, action2, action3 } = req.body
+    const { firstname, location, budget, action1, action2, action3, wallet_address } = req.body
 
-    const { error } = await supabase.from('programmes').insert([
+    // Check if the wallet address already exists
+    const { data: existingEntries, error: fetchError } = await supabase
+      .from('programmes')
+      .select('wallet_address')
+      .eq('wallet_address', wallet_address)
+
+    if (fetchError) {
+      throw fetchError
+    }
+
+    if (existingEntries && existingEntries.length > 0) {
+      res.status(409).json({ error: 'Wallet address already used', code: 'WALLET_ALREADY_USED' })
+      return
+    }
+
+    // Insert the new entry
+    const { error: insertError } = await supabase.from('programmes').insert([
       {
         firstname,
         location,
@@ -22,11 +38,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         action1,
         action2,
         action3,
+        wallet_address,
       },
     ])
 
-    if (error) {
-      throw error
+    if (insertError) {
+      throw insertError
     }
 
     res.status(201).json({ message: 'Data inserted successfully' })
