@@ -5,6 +5,9 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@anima-protocol/personhood-sdk-react':
+    specifier: ^0.6.0
+    version: 0.6.0(react-dom@18.2.0)(react@18.2.0)
   '@chakra-ui/icons':
     specifier: ^2.1.1
     version: 2.1.1(@chakra-ui/system@2.6.2)(react@18.2.0)
@@ -38,9 +41,6 @@ dependencies:
   autoprefixer:
     specifier: 10.4.14
     version: 10.4.14(postcss@8.4.23)
-  axios:
-    specifier: ^1.7.2
-    version: 1.7.2
   date-fns:
     specifier: ^3.6.0
     version: 3.6.0
@@ -146,6 +146,16 @@ packages:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.5
       '@jridgewell/trace-mapping': 0.3.25
+    dev: false
+
+  /@anima-protocol/personhood-sdk-react@0.6.0(react-dom@18.2.0)(react@18.2.0):
+    resolution: {integrity: sha512-yJk0wFfudEP7aob8rdTdf4bFVWArlVEqcu1sTXeLW95OFD1yRvTfzsR1yh941OG58wYxRbF98IZtR7zrjQ3LrQ==}
+    peerDependencies:
+      react: ^18.2.0
+      react-dom: ^18.2.0
+    dependencies:
+      react: 18.2.0
+      react-dom: 18.2.0(react@18.2.0)
     dev: false
 
   /@babel/code-frame@7.24.7:
@@ -6022,16 +6032,6 @@ packages:
     engines: {node: '>=4'}
     dev: false
 
-  /axios@1.7.2:
-    resolution: {integrity: sha512-2A8QhOMrbomlDuiLeK9XibIBzuHeRcqqNOHp0Cyp5EoJ1IFDh+XZH3A6BkXtv0K4gFGCI0Y4BM7B1wOEi0Rmgw==}
-    dependencies:
-      follow-redirects: 1.15.6
-      form-data: 4.0.0
-      proxy-from-env: 1.1.0
-    transitivePeerDependencies:
-      - debug
-    dev: false
-
   /axobject-query@3.1.1:
     resolution: {integrity: sha512-goKlv8DZrK9hUh975fnHzhNIO4jUnFCfv/dszV5VwUGDFjI6vQ2VwoyjYjYNEbBE8AH87TduWP5uyDR1D+Iteg==}
     dependencies:
@@ -7686,16 +7686,6 @@ packages:
     engines: {node: '>=10'}
     dependencies:
       tslib: 2.6.3
-    dev: false
-
-  /follow-redirects@1.15.6:
-    resolution: {integrity: sha512-wWN62YITEaOpSK584EZXJafH1AGpO8RVgElfkuXbTOrPX4fIfOyEpW/CsiNd8JdYrAoOvafRTOEnvsO++qCqFA==}
-    engines: {node: '>=4.0'}
-    peerDependencies:
-      debug: '*'
-    peerDependenciesMeta:
-      debug:
-        optional: true
     dev: false
 
   /for-each@0.3.3:
@@ -10879,10 +10869,6 @@ packages:
 
   /proxy-compare@2.5.1:
     resolution: {integrity: sha512-oyfc0Tx87Cpwva5ZXezSp5V9vht1c7dZBhvuV/y3ctkgMVUmiAGDVeeB0dKhGSyT0v1ZTEQYpe/RXlBVBNuCLA==}
-    dev: false
-
-  /proxy-from-env@1.1.0:
-    resolution: {integrity: sha512-D+zkORCbA9f1tdWRK0RaCR3GPv50cMxcrz4X8k5LTSUD1Dkw47mKJEZQNunItRTkWwgtaUSo1RVFRIG9ZXiFYg==}
     dev: false
 
   /pump@3.0.0:

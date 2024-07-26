@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { FormControl, Text, Textarea, FormHelperText, FormLabel, Input, Button, useToast, Box } from '@chakra-ui/react'
 import { HeadingComponent } from '../../components/layout/HeadingComponent'
 import { useWeb3ModalProvider, useWeb3ModalAccount } from '@web3modal/ethers/react'
+import { ethers, BrowserProvider, JsonRpcSigner, Eip1193Provider } from 'ethers'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
+import { Personhood } from '@anima-protocol/personhood-sdk-react'
 
 interface Programme {
   id: number
@@ -27,9 +29,14 @@ export default function Gouv() {
   const [location, setLocation] = useState('')
   const [programmes, setProgrammes] = useState<Programme[]>([])
   const [limit, setLimit] = useState(10)
+  const [signer, setSigner] = useState<JsonRpcSigner | null>(null)
+  const [userAddress, setUserAddress] = useState<string | null>(null)
+  const [sessionId, setSessionId] = useState<string | null>(null)
 
   const toast = useToast()
-  const { address, chainId, isConnected } = useWeb3ModalAccount()
+  const { isConnected } = useWeb3ModalAccount()
+  const { walletProvider } = useWeb3ModalProvider()
+  const provider: Eip1193Provider | undefined = walletProvider
 
   const fetchProgrammes = async (limit: number) => {
     try {
@@ -49,19 +56,46 @@ export default function Gouv() {
   }
 
   const pop = async () => {
-    try {
-      const response = await fetch(`/api/popInit`)
-      const data = await response.json()
-      console.log(data)
+    if (!provider) {
       toast({
-        title: 'Success',
-        description: 'Thank you!',
-        status: 'success',
-        duration: 9000,
+        title: 'No Wallet',
+        description: 'Please connect your wallet first!',
+        status: 'error',
+        duration: 5000,
         isClosable: true,
       })
+      return
+    }
+
+    try {
+      setIsLoadingPop(true)
+
+      const ethersProvider = new BrowserProvider(provider as any)
+      const signer = await ethersProvider.getSigner()
+      setSigner(signer)
+      const address = await signer.getAddress()
+      setUserAddress(address)
+
+      const response = await fetch(`/api/popInit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ address }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to initialize PoP session')
+      }
+
+      const data = await response.json()
+      console.log('PoP session data:', data)
+      console.log('PoP session data.data:', data.data)
+      setSessionId(data.data.session_id)
+      setIsLoadingPop(false)
+      console.log('userAddress:', userAddress, '\nsigner: ', signer, 'sessionId:', sessionId, 'data.data.session_id:', data.data.session_id)
     } catch (error) {
-      console.error('Error fetching programmes:', error)
+      console.error('Error initializing PoP:', error)
       toast({
         title: 'Failed',
         description: 'Sorry for that...',
@@ -69,20 +103,20 @@ export default function Gouv() {
         duration: 5000,
         isClosable: true,
       })
+      setIsLoadingPop(false)
     }
   }
 
   useEffect(() => {
     fetchProgrammes(limit)
     if (isConnected) {
-      console.log('User connected with address ', address)
+      console.log('User connected')
     } else {
       console.log('User not connected yet')
     }
   }, [limit, isConnected])
 
   const handleSubmit = async () => {
-    // Check for empty required fields
     if (!firstname || !location || !budget || !action1) {
       toast({
         title: 'Incomplet',
@@ -126,7 +160,7 @@ export default function Gouv() {
         isClosable: true,
       })
       setIsLoading(false)
-      fetchProgrammes(limit) // Fetch updated programmes list
+      fetchProgrammes(limit)
     } catch (error) {
       console.error('Form submission error:', error)
       toast({
@@ -141,6 +175,18 @@ export default function Gouv() {
   }
 
   const maxLength = 500
+
+  const sign = useCallback(
+    (payload: string | object) => {
+      const message = typeof payload === 'string' ? payload : JSON.stringify(payload)
+      return signer!.signMessage(message)
+    },
+    [signer]
+  )
+
+  const shared = useCallback((e: { info: string }) => {
+    console.log('shared', e.info)
+  }, [])
 
   return (
     <main>
@@ -286,6 +332,7 @@ export default function Gouv() {
         spinnerPlacement="end">
         PoP
       </Button>
+      {userAddress && signer && sessionId && <Personhood onFinish={shared} sessionId={sessionId} signCallback={sign} walletAddress={userAddress} />}
       <br />
       <br />
       <br />
