@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FormControl, Text, Textarea, FormHelperText, FormLabel, Input, Button, useToast, Box } from '@chakra-ui/react'
 import { HeadingComponent } from '../../components/layout/HeadingComponent'
+import { useWeb3ModalProvider, useWeb3ModalAccount } from '@web3modal/ethers/react'
 import { format } from 'date-fns'
 import { fr } from 'date-fns/locale'
 
@@ -25,7 +26,9 @@ export default function Gouv() {
   const [location, setLocation] = useState('')
   const [programmes, setProgrammes] = useState<Programme[]>([])
   const [limit, setLimit] = useState(10)
+
   const toast = useToast()
+  const { address, chainId, isConnected } = useWeb3ModalAccount()
 
   const fetchProgrammes = async (limit: number) => {
     try {
@@ -46,7 +49,12 @@ export default function Gouv() {
 
   useEffect(() => {
     fetchProgrammes(limit)
-  }, [limit])
+    if (isConnected) {
+      console.log('User connected with address ', address)
+    } else {
+      console.log('User not connected yet')
+    }
+  }, [limit, isConnected])
 
   const handleSubmit = async () => {
     // Check for empty required fields
