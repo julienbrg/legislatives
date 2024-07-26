@@ -6,17 +6,18 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const limit = parseInt(req.query.limit as string) || 10
+
   try {
-    const ip_address = (req.headers['x-forwarded-for'] as string)?.split(',').shift() || req.socket.remoteAddress
-    const { error } = await supabase.from('requests').insert([{ ip_address }])
+    const { data, error } = await supabase.from('programmes').select('*').order('id', { ascending: false }).limit(limit)
 
     if (error) {
       throw error
     }
 
-    res.status(201).json({ message: 'Data inserted successfully' })
+    res.status(200).json(data)
   } catch (error: any) {
-    console.error('Error inserting data into Supabase:', error.message)
-    res.status(500).json({ error: 'Failed to insert data' })
+    console.error('Error fetching data from Supabase:', error.message)
+    res.status(500).json({ error: 'Failed to fetch data' })
   }
 }
