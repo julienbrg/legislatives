@@ -63,6 +63,8 @@ export default function Gouv() {
         duration: 5000,
         isClosable: true,
       })
+      setIsPersonhoodVisible(false)
+      setIsLoading(false)
       return
     }
 
@@ -102,12 +104,7 @@ export default function Gouv() {
 
   useEffect(() => {
     fetchProgrammes()
-    if (isConnected) {
-      console.log('User connected')
-    } else {
-      console.log('User not connected yet')
-    }
-  }, [isConnected])
+  }, [])
 
   const handleSubmit = async () => {
     setIsLoading(true)
@@ -141,6 +138,8 @@ export default function Gouv() {
 
   const shared = useCallback(
     async (e: { info: string }) => {
+      setIsPersonhoodVisible(false)
+
       try {
         const response = await fetch('/api/gouvWrite', {
           method: 'POST',
@@ -154,11 +153,24 @@ export default function Gouv() {
             action1,
             action2,
             action3,
+            wallet_address: userAddress,
           }),
         })
 
         if (!response.ok) {
-          throw new Error('Failed to submit data')
+          const errorData = await response.json()
+          if (errorData.code === 'WALLET_ALREADY_USED') {
+            toast({
+              title: 'Déjà envoyé',
+              description: "Vous avez déjà donné votre avis. Il n'est pas possible de donner plusieurs réponse",
+              status: 'error',
+              duration: 9000,
+              isClosable: true,
+            })
+          } else {
+            throw new Error('Failed to submit data')
+          }
+          return
         }
 
         const result = await response.json()
@@ -170,7 +182,6 @@ export default function Gouv() {
           isClosable: true,
         })
         fetchProgrammes()
-        setIsPersonhoodVisible(false)
       } catch (error) {
         toast({
           title: 'Woops',
@@ -180,9 +191,8 @@ export default function Gouv() {
           isClosable: true,
         })
       }
-      setIsPersonhoodVisible(false)
     },
-    [firstname, location, budget, action1, action2, action3]
+    [firstname, location, budget, action1, action2, action3, userAddress]
   )
 
   return (
