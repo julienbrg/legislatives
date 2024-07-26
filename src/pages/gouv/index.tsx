@@ -1,22 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import {
-  FormControl,
-  Text,
-  Textarea,
-  FormHelperText,
-  FormLabel,
-  Input,
-  Button,
-  useToast,
-  Box,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalBody,
-  ModalCloseButton,
-  useDisclosure,
-} from '@chakra-ui/react'
+import { FormControl, Text, Textarea, FormHelperText, FormLabel, Input, Button, useToast, Box } from '@chakra-ui/react'
 import { HeadingComponent } from '../../components/layout/HeadingComponent'
 import { useWeb3ModalProvider, useWeb3ModalAccount } from '@web3modal/ethers/react'
 import { BrowserProvider, JsonRpcSigner, Eip1193Provider } from 'ethers'
@@ -48,12 +31,12 @@ export default function Gouv() {
   const [signer, setSigner] = useState<JsonRpcSigner | null>(null)
   const [userAddress, setUserAddress] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [isPersonhoodVisible, setIsPersonhoodVisible] = useState(false)
 
   const toast = useToast()
   const { isConnected } = useWeb3ModalAccount()
   const { walletProvider } = useWeb3ModalProvider()
   const provider: Eip1193Provider | undefined = walletProvider
-  const { isOpen, onOpen, onClose } = useDisclosure()
 
   const fetchProgrammes = async (limit: number) => {
     try {
@@ -105,6 +88,7 @@ export default function Gouv() {
 
       const data = await response.json()
       setSessionId(data.data.session_id)
+      setIsPersonhoodVisible(true) // Show the Personhood component
     } catch (error) {
       console.error('Error initializing PoP:', error)
       toast({
@@ -127,8 +111,6 @@ export default function Gouv() {
   }, [limit, isConnected])
 
   const handleSubmit = async () => {
-    setIsLoading(true)
-
     if (!firstname || !location || !budget || !action1) {
       toast({
         title: 'Incomplet',
@@ -137,32 +119,28 @@ export default function Gouv() {
         duration: 9000,
         isClosable: true,
       })
-      setIsLoading(false)
-      return
-    }
-
-    // Check if user is logged in
-    if (!isConnected) {
-      toast({
-        title: 'Disconnected',
-        position: 'bottom',
-        description: 'Merci de connecter votre wallet avant toute chose.',
-        status: 'info',
-        variant: 'subtle',
-        duration: 9000,
-        isClosable: true,
-      })
-      console.log('user disconnected')
-      setIsLoading(false)
       return
     }
 
     // Initiate PoP process
     await initiatePop()
+  }
 
-    onOpen() // Open the modal after initializing the PoP session
+  const maxLength = 500
 
+  const sign = useCallback(
+    (payload: string | object) => {
+      const message = typeof payload === 'string' ? payload : JSON.stringify(payload)
+      return signer!.signMessage(message)
+    },
+    [signer]
+  )
+
+  const shared = useCallback(async (e: { info: string }) => {
+    console.log('shared', e.info)
     try {
+      setIsLoading(true)
+
       const response = await fetch('/api/gouvWrite', {
         method: 'POST',
         headers: {
@@ -192,32 +170,20 @@ export default function Gouv() {
         isClosable: true,
       })
       setIsLoading(false)
+      setIsPersonhoodVisible(false)
       fetchProgrammes(limit)
     } catch (error) {
       console.error('Form submission error:', error)
       toast({
         title: 'Woops',
-        description: "Déso, j'ai eu un souci avec Supabase",
+        description: "Déolé, votre contribution n'a pas été correctement enregistrée.",
         status: 'error',
         duration: 5000,
         isClosable: true,
       })
       setIsLoading(false)
+      setIsPersonhoodVisible(false)
     }
-  }
-
-  const maxLength = 500
-
-  const sign = useCallback(
-    (payload: string | object) => {
-      const message = typeof payload === 'string' ? payload : JSON.stringify(payload)
-      return signer!.signMessage(message)
-    },
-    [signer]
-  )
-
-  const shared = useCallback((e: { info: string }) => {
-    console.log('shared', e.info)
   }, [])
 
   return (
@@ -287,16 +253,29 @@ export default function Gouv() {
         <br />
         <br />
       </FormControl>
-      <Button
-        colorScheme="blue"
-        variant="outline"
-        type="button"
-        onClick={handleSubmit}
-        isLoading={isLoading}
-        loadingText="Envoi en cours..."
-        spinnerPlacement="end">
-        Envoyer
-      </Button>
+      {!isPersonhoodVisible ? (
+        <Button
+          colorScheme="blue"
+          variant="outline"
+          type="button"
+          onClick={handleSubmit}
+          isLoading={isLoading}
+          loadingText="Envoi en cours..."
+          spinnerPlacement="end">
+          Envoyer
+        </Button>
+      ) : (
+        userAddress &&
+        signer &&
+        sessionId && (
+          <>
+            <Text fontSize="16px">
+              <strong>Merci de cliquer dans le cercle ci-dessous :</strong>
+            </Text>
+            <br /> <Personhood onFinish={shared} sessionId={sessionId} signCallback={sign} walletAddress={userAddress} />
+          </>
+        )
+      )}
       <br />
       <br />
 
@@ -354,18 +333,6 @@ export default function Gouv() {
       <br />
       <br />
       <br />
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Nous avons besoin de vérifier que vous êtes un humain.</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            {userAddress && signer && sessionId && (
-              <Personhood onFinish={shared} sessionId={sessionId} signCallback={sign} walletAddress={userAddress} />
-            )}
-          </ModalBody>
-        </ModalContent>
-      </Modal>
     </main>
   )
 }
