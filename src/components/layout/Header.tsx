@@ -8,7 +8,7 @@ import { SITE_NAME } from '../../utils/config'
 import { GiReceiveMoney } from 'react-icons/gi'
 import { IoExitOutline, IoEnterOutline } from 'react-icons/io5'
 import { GrValidate } from 'react-icons/gr'
-import { LuBookOpenCheck } from 'react-icons/lu'
+import { LuBookOpenCheck, LuKeyRound } from 'react-icons/lu'
 
 interface Props {
   className?: string
@@ -48,6 +48,11 @@ export function Header(props: Props) {
                 Mon vote
               </MenuItem>
             </LinkComponent> */}
+            <LinkComponent href="/gouv">
+              <MenuItem fontSize="xl" icon={<LuKeyRound />}>
+                Mon gouv
+              </MenuItem>
+            </LinkComponent>
           </MenuList>
         </Menu>
         {/* <w3m-button /> */}
