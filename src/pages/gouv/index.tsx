@@ -18,6 +18,7 @@ interface Programme {
 
 export default function Gouv() {
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingPop, setIsLoadingPop] = useState(false)
   const [budget, setBudget] = useState('')
   const [action1, setAction1] = useState('')
   const [action2, setAction2] = useState('')
@@ -40,6 +41,30 @@ export default function Gouv() {
       toast({
         title: 'Woops',
         description: "Déso, on n'a pas réussi à charger les données sur cette page.",
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      })
+    }
+  }
+
+  const pop = async () => {
+    try {
+      const response = await fetch(`/api/popInit`)
+      const data = await response.json()
+      console.log(data)
+      toast({
+        title: 'Success',
+        description: 'Thank you!',
+        status: 'success',
+        duration: 9000,
+        isClosable: true,
+      })
+    } catch (error) {
+      console.error('Error fetching programmes:', error)
+      toast({
+        title: 'Failed',
+        description: 'Sorry for that...',
         status: 'error',
         duration: 5000,
         isClosable: true,
@@ -251,6 +276,16 @@ export default function Gouv() {
       <br />
       <br />
       <br />
+      <Button
+        colorScheme="red"
+        variant="outline"
+        type="button"
+        onClick={pop}
+        isLoading={isLoadingPop}
+        loadingText="PoPping..."
+        spinnerPlacement="end">
+        PoP
+      </Button>
       <br />
       <br />
       <br />
