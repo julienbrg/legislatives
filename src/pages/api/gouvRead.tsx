@@ -6,10 +6,8 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const limit = parseInt(req.query.limit as string) || 10
-
   try {
-    const { data, error } = await supabase.from('programmes').select('*').order('id', { ascending: false }).limit(limit)
+    const { data, error } = await supabase.from('programmes').select('*').order('id', { ascending: false })
 
     if (error) {
       throw error

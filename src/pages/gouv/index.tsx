@@ -27,7 +27,6 @@ export default function Gouv() {
   const [firstname, setFirstname] = useState('')
   const [location, setLocation] = useState('')
   const [programmes, setProgrammes] = useState<Programme[]>([])
-  const [limit, setLimit] = useState(10)
   const [signer, setSigner] = useState<JsonRpcSigner | null>(null)
   const [userAddress, setUserAddress] = useState<string | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -38,9 +37,9 @@ export default function Gouv() {
   const { walletProvider } = useWeb3ModalProvider()
   const provider: Eip1193Provider | undefined = walletProvider
 
-  const fetchProgrammes = async (limit: number) => {
+  const fetchProgrammes = async () => {
     try {
-      const response = await fetch(`/api/gouvRead?limit=${limit}`)
+      const response = await fetch('/api/gouvRead')
       const data = await response.json()
       setProgrammes(data)
     } catch (error) {
@@ -88,7 +87,7 @@ export default function Gouv() {
 
       const data = await response.json()
       setSessionId(data.data.session_id)
-      setIsPersonhoodVisible(true) // Show the Personhood component
+      setIsPersonhoodVisible(true)
     } catch (error) {
       console.error('Error initializing PoP:', error)
       toast({
@@ -102,15 +101,17 @@ export default function Gouv() {
   }
 
   useEffect(() => {
-    fetchProgrammes(limit)
+    fetchProgrammes()
     if (isConnected) {
       console.log('User connected')
     } else {
       console.log('User not connected yet')
     }
-  }, [limit, isConnected])
+  }, [isConnected])
 
   const handleSubmit = async () => {
+    setIsLoading(true)
+
     if (!firstname || !location || !budget || !action1) {
       toast({
         title: 'Incomplet',
@@ -119,11 +120,13 @@ export default function Gouv() {
         duration: 9000,
         isClosable: true,
       })
+      setIsLoading(false)
       return
     }
 
-    // Initiate PoP process
     await initiatePop()
+
+    setIsLoading(false)
   }
 
   const maxLength = 500
@@ -136,55 +139,51 @@ export default function Gouv() {
     [signer]
   )
 
-  const shared = useCallback(async (e: { info: string }) => {
-    console.log('shared', e.info)
-    try {
-      setIsLoading(true)
+  const shared = useCallback(
+    async (e: { info: string }) => {
+      try {
+        const response = await fetch('/api/gouvWrite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            firstname,
+            location,
+            budget,
+            action1,
+            action2,
+            action3,
+          }),
+        })
 
-      const response = await fetch('/api/gouvWrite', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstname,
-          location,
-          budget,
-          action1,
-          action2,
-          action3,
-        }),
-      })
+        if (!response.ok) {
+          throw new Error('Failed to submit data')
+        }
 
-      if (!response.ok) {
-        throw new Error('Failed to submit data')
+        const result = await response.json()
+        toast({
+          title: 'Bien reçu ! 🎉',
+          description: 'Merci pour votre précieuse contribution.',
+          status: 'success',
+          duration: 9000,
+          isClosable: true,
+        })
+        fetchProgrammes()
+        setIsPersonhoodVisible(false)
+      } catch (error) {
+        toast({
+          title: 'Woops',
+          description: "Déolé, votre contribution n'a pas été correctement enregistrée.",
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        })
       }
-
-      const result = await response.json()
-      console.log('Form submission result:', result)
-      toast({
-        title: 'Bien reçu ! 🎉',
-        description: 'Merci pour votre précieuse contribution.',
-        status: 'success',
-        duration: 9000,
-        isClosable: true,
-      })
-      setIsLoading(false)
       setIsPersonhoodVisible(false)
-      fetchProgrammes(limit)
-    } catch (error) {
-      console.error('Form submission error:', error)
-      toast({
-        title: 'Woops',
-        description: "Déolé, votre contribution n'a pas été correctement enregistrée.",
-        status: 'error',
-        duration: 5000,
-        isClosable: true,
-      })
-      setIsLoading(false)
-      setIsPersonhoodVisible(false)
-    }
-  }, [])
+    },
+    [firstname, location, budget, action1, action2, action3]
+  )
 
   return (
     <main>
@@ -322,12 +321,6 @@ export default function Gouv() {
             )}
           </Box>
         ))}
-        <br />
-        {programmes.length >= limit && (
-          <Button onClick={() => setLimit(limit + 10)} colorScheme="green" size={'sm'}>
-            Voir plus de réponses
-          </Button>
-        )}
       </Box>
       <br />
       <br />
